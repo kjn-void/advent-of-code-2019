@@ -3,12 +3,11 @@ use Instruction::*;
 
 type Intcode = usize;
 type Addr = Intcode;
-type Param = Intcode;
 
 #[derive(PartialEq,Debug)]
 enum Instruction {
-    Add(Param, Param, Param),
-    Mul(Param, Param, Param),
+    Add(Addr, Addr, Addr),
+    Mul(Addr, Addr, Addr),
     Halt,
 }
 
