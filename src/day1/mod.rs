@@ -26,7 +26,10 @@ fn fuel_with_mass_required(mass: &Mass) -> Fuel {
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     Box::new(State {
-	modules: lines.iter().map(|line|line.parse::<Mass>().unwrap()).collect()
+        modules: lines
+            .iter()
+            .map(|line| line.parse::<Mass>().unwrap())
+            .collect(),
     })
 }
 
@@ -47,37 +50,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ex1() {
+    fn d1_ex1() {
         assert!(solution(vec!["12"]).part1() == "2");
     }
 
     #[test]
-    fn ex2() {
+    fn d1_ex2() {
         assert!(solution(vec!["14"]).part1() == "2");
     }
 
     #[test]
-    fn ex3() {
+    fn d1_ex3() {
         assert!(solution(vec!["1969"]).part1() == "654");
     }
 
     #[test]
-    fn ex4() {
+    fn d1_ex4() {
         assert!(solution(vec!["100756"]).part1() == "33583");
     }
 
     #[test]
-    fn ex5() {
+    fn d1_ex5() {
         assert!(solution(vec!["12"]).part2() == "2");
     }
 
     #[test]
-    fn ex6() {
+    fn d1_ex6() {
         assert!(solution(vec!["1969"]).part2() == "966");
     }
 
     #[test]
-    fn ex7() {
+    fn d1_ex7() {
         assert!(solution(vec!["100756"]).part2() == "50346");
     }
 }
