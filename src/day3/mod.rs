@@ -68,6 +68,54 @@ fn dir_parse(repr: &str) -> Direction {
     }
 }
 
+// Returns all position a line passes through and the distance from start for
+// each position.
+fn line_trace(line: &Vec<Movement>) -> HashMap<Pos, Distance> {
+    let mut trace = HashMap::new();
+    let mut p = Pos::start();
+    let mut distance = 0;
+    for m in line {
+        let path = p.step_n(m.distance, m.dir);
+        for pos in &path {
+            distance = distance + 1;
+            trace.insert(*pos, distance);
+        }
+    }
+    trace
+}
+
+impl Solution for State {
+    fn part1(&self) -> String {
+        let trace = line_trace(&self.line_a);
+        let mut p = Pos::start();
+        self.line_b
+            .iter()
+            .flat_map(|m| p.step_n(m.distance, m.dir))
+            .filter(|pos| trace.contains_key(pos))
+            .map(|pos| pos.manhattan_distance(Pos::start()))
+            .min()
+            .unwrap()
+            .to_string()
+    }
+
+    fn part2(&self) -> String {
+        let trace = line_trace(&self.line_a);
+        let mut min_distance = std::u32::MAX;
+        let mut dist_b = 0;
+        let mut p = Pos::start();
+        for m in &self.line_b {
+            let path = p.step_n(m.distance, m.dir);
+            for pos in &path {
+                dist_b = dist_b + 1;
+                if let Some(dist_a) = trace.get(pos) {
+                    min_distance = std::cmp::min(min_distance, dist_a + dist_b);
+                }
+            }
+        }
+        min_distance.to_string()
+    }
+}
+
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     let mut sln = State {
         line_a: Vec::new(),
@@ -88,58 +136,6 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
         }
     }
     Box::new(sln)
-}
-
-// Returns all position a line passes through and the distance from start for 
-// each position.
-fn line_trace(line: &Vec<Movement>) -> HashMap<Pos, Distance> {
-    let mut trace = HashMap::new();
-    let mut p = Pos::start();
-    let mut distance = 0;
-    for m in line.iter() {
-        let path = p.step_n(m.distance, m.dir);
-        for pos in path.iter() {
-            distance = distance + 1;
-            trace.insert(*pos, distance);
-        }
-    }
-    trace
-}
-
-impl Solution for State {
-    fn part1(&self) -> String {
-        let trace = line_trace(&self.line_a);
-        let mut intersections = Vec::new();
-        let mut p = Pos::start();
-        for m in self.line_b.iter() {
-            let path = p.step_n(m.distance, m.dir);
-            for pos in path.iter() {
-                if let Some(_) = trace.get(pos) {
-                    intersections.push(pos.manhattan_distance(Pos::start()));
-                }
-            }
-        }
-        intersections.sort();
-        intersections[0].to_string()
-    }
-
-    fn part2(&self) -> String {
-        let trace = line_trace(&self.line_a);
-        let mut trace_distance = Vec::new();
-        let mut p = Pos::start();
-        let mut dist_b = 0;
-        for m in self.line_b.iter() {
-            let path = p.step_n(m.distance, m.dir);
-            for pos in path.iter() {
-                dist_b = dist_b + 1;
-                if let Some(dist_a) = trace.get(pos) {
-                    trace_distance.push(dist_a + dist_b);
-                }
-            }
-        }
-        trace_distance.sort();
-        trace_distance[0].to_string()
-    }
 }
 
 #[cfg(test)]

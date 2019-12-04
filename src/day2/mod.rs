@@ -16,15 +16,6 @@ pub struct State {
     memory: Vec<Intcode>,
 }
 
-pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
-        memory: lines[0]
-            .split(",")
-            .map(|ic| ic.parse::<Intcode>().unwrap())
-            .collect(),
-    })
-}
-
 fn fetch(mem: &Vec<Intcode>, ip: Addr) -> Instruction {
     let opcode = mem[ip];
     match opcode {
@@ -84,6 +75,15 @@ impl Solution for State {
         }
         (100 * noun + verb).to_string()
     }
+}
+
+pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
+    Box::new(State {
+        memory: lines[0]
+            .split(",")
+            .map(|ic| ic.parse::<Intcode>().unwrap())
+            .collect(),
+    })
 }
 
 #[cfg(test)]

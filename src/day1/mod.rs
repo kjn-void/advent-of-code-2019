@@ -24,15 +24,6 @@ fn fuel_with_mass_required(mass: &Mass) -> Fuel {
     }
 }
 
-pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
-        modules: lines
-            .iter()
-            .map(|line| line.parse::<Mass>().unwrap())
-            .collect(),
-    })
-}
-
 impl Solution for State {
     fn part1(&self) -> String {
         let fuel: Fuel = self.modules.iter().map(fuel_required).sum();
@@ -43,6 +34,15 @@ impl Solution for State {
         let fuel: Fuel = self.modules.iter().map(fuel_with_mass_required).sum();
         fuel.to_string()
     }
+}
+
+pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
+    Box::new(State {
+        modules: lines
+            .iter()
+            .map(|line| line.parse::<Mass>().unwrap())
+            .collect(),
+    })
 }
 
 #[cfg(test)]
