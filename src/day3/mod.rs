@@ -6,7 +6,7 @@ use Direction::*;
 type Distance = u32;
 type Coord = i32;
 
-// State required for solve day 3
+// State required to solve day 3
 pub struct State {
     line_a: Vec<Movement>,
     line_b: Vec<Movement>,

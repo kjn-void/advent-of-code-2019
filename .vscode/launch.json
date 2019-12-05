@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["3", "src/day3/input.txt"],
+            "args": ["5", "src/day5/input.txt"],
             "cwd": "${workspaceFolder}"
         },
         {

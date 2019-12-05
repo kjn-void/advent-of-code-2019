@@ -4,7 +4,7 @@ use std::ops::RangeInclusive;
 const PIN_DIGITS: usize = 6;
 type Pin = u32;
 
-// State required for solve day 4
+// State required to solve day 4
 pub struct State {
     candidate_pins: RangeInclusive<Pin>,
 }

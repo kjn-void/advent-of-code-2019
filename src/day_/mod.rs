@@ -1,6 +1,6 @@
 use super::Solution;
 
-// State required for solve day _
+// State required to solve day _
 pub struct State {}
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

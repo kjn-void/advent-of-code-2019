@@ -11,7 +11,7 @@ enum Instruction {
     Halt,
 }
 
-// State required for solve day 2
+// State required to solve day 2
 pub struct State {
     memory: Vec<Intcode>,
 }
@@ -108,12 +108,12 @@ mod tests {
     }
 
     #[test]
-    fn d2_ex3() {
+    fn d2_part1() {
         assert!(solution(vec![INPUT]).part1() == "4090701");
     }
 
     #[test]
-    fn d2_ex4() {
+    fn d2_part2() {
         assert!(solution(vec![INPUT]).part2() == "6421");
     }
 }

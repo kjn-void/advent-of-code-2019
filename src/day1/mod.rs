@@ -3,7 +3,7 @@ use super::Solution;
 type Mass = i32;
 type Fuel = i32;
 
-// State required for solve day 1
+// State required to solve day 1
 pub struct State {
     modules: Vec<Mass>,
 }
