@@ -7,6 +7,7 @@ mod day2;
 mod day3;
 mod day4;
 mod day5;
+mod day6;
 
 type Day = u32;
 
@@ -26,6 +27,7 @@ fn solution_get(day: Day, input: &mut dyn BufRead) -> Box<dyn Solution> {
         3 => day3::solution(lines),
         4 => day4::solution(lines),
         5 => day5::solution(lines),
+        6 => day6::solution(lines),
         _ => panic!("Invalid day specified"),
     }
 }
@@ -39,8 +41,9 @@ fn main() {
         let f = File::open(&args[2]).expect("Failed to open input file");
         let mut input = BufReader::new(f);
         let solution = solution_get(day, &mut input);
-
-        println!("🕯️ Part 1: {}", solution.part1());
-        println!("🕯️ Part 2: {}", solution.part2());
+        let start = std::time::Instant::now();
+        println!("🕯️  Part 1 : {}", solution.part1());
+        println!("🕯️🕯️ Part 2 : {}", solution.part2());
+        println!("⌚ Took   : {} ms", start.elapsed().as_millis());
     }
 }

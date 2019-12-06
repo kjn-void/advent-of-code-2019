@@ -18,7 +18,7 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "cargo run 5 src/day5/input.txt",
+            "command": "cargo run 6 src/day6/input.txt",
             "problemMatcher": []
         }
     ]
