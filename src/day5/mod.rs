@@ -1,117 +1,29 @@
+use super::intcode::*;
 use super::Solution;
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
-use Instruction::*;
-
-type Intcode = i32;
-
-#[derive(Debug, FromPrimitive)]
-enum Instruction {
-    Add = 1,
-    Mul = 2,
-    In = 3,
-    Out = 4,
-    JmpIfTrue = 5,
-    JmpIfFalse = 6,
-    LessThan = 7,
-    Equals = 8,
-    Halt = 99,
-}
+use std::sync::mpsc::*;
 
 // State required to solve day 5
 pub struct State {
     memory: Vec<Intcode>,
 }
 
-fn run(memory: &Vec<Intcode>, input: &mut dyn Iterator<Item = Intcode>) -> Vec<Intcode> {
-    let mut mem = memory.clone();
-    let mut ip: usize = 0;
-    let mut output = Vec::new();
-    loop {
-        let mut st = None;
-        {
-            let opcode = mem[ip];
-            let is_imm = [
-                false,
-                opcode / 100 % 10 != 0,
-                opcode / 1000 % 10 != 0,
-                opcode / 10000 % 10 != 0,
-            ];
-            let ld_imm = |offset| mem[ip + offset as usize];
-            let ld = |offset| {
-                if is_imm[offset] {
-                    ld_imm(offset)
-                } else {
-                    mem[ld_imm(offset) as usize]
-                }
-            };
-            ip = match FromPrimitive::from_i32(opcode % 100).expect("Invalid instruction") {
-                Add => {
-                    st = Some((ld(1) + ld(2), ld_imm(3)));
-                    ip + 4
-                }
-                Mul => {
-                    st = Some((ld(1) * ld(2), ld_imm(3)));
-                    ip + 4
-                }
-                In => {
-                    st = Some((input.next().unwrap(), ld_imm(1)));
-                    ip + 2
-                }
-                Out => {
-                    output.push(ld(1));
-                    ip + 2
-                }
-                JmpIfTrue => {
-                    if ld(1) != 0 {
-                        ld(2) as usize
-                    } else {
-                        ip + 3
-                    }
-                }
-                JmpIfFalse => {
-                    if ld(1) == 0 {
-                        ld(2) as usize
-                    } else {
-                        ip + 3
-                    }
-                }
-                LessThan => {
-                    st = Some((if ld(1) < ld(2) { 1 } else { 0 }, ld_imm(3)));
-                    ip + 4
-                }
-                Equals => {
-                    st = Some((if ld(1) == ld(2) { 1 } else { 0 }, ld_imm(3)));
-                    ip + 4
-                }
-                Halt => {
-                    return output;
-                }
-            }
-        }
-        // All immutable borrows must go out of scope before it is OK to store
-        // to 'mem', so this kind of simulates "write-back" step in a CPU...
-        if let Some((val, addr)) = st {
-            mem[addr as usize] = val;
-        }
-    }
-}
-
 impl Solution for State {
     fn part1(&self) -> String {
-        let input: Vec<Intcode> = vec![1];
-        run(&self.memory, &mut input.into_iter())
-            .last()
-            .unwrap()
-            .to_string()
+        let (input, sink) = channel();
+        let output = exec(&self.memory, sink, None);
+        input.send(1).unwrap();
+        let mut final_result = 0;
+        while let Ok(result) = output.recv() {
+            final_result = result;
+        }
+        final_result.to_string()
     }
 
     fn part2(&self) -> String {
-        let input: Vec<Intcode> = vec![5];
-        run(&self.memory, &mut input.into_iter())
-            .last()
-            .unwrap()
-            .to_string()
+        let (input, sink) = channel();
+        let output = exec(&self.memory, sink, None);
+        input.send(5).unwrap();
+        output.recv().unwrap().to_string()
     }
 }
 
@@ -130,108 +42,134 @@ mod tests {
 
     #[test]
     fn d5_ex1() {
-        let memory = vec![3, 0, 4, 0, 99];
-        let input: Vec<Intcode> = vec![42];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &42);
+        let (input, sink) = channel();
+        input.send(42).unwrap();
+        let output = exec(&vec![3, 0, 4, 0, 99], sink, None);
+        assert_eq!(output.recv().unwrap(), 42);
     }
 
     #[test]
-    #[should_panic]
     fn d5_ex2() {
-        let memory = vec![3, 0, 3, 0, 99];
-        let input: Vec<Intcode> = vec![42];
-        run(&memory, &mut input.into_iter());
+        let (_, sink) = channel();
+        let output = exec(&vec![1102, 11, 22, 7, 4, 7, 99, 0], sink, None);
+        assert_eq!(output.recv().unwrap(), 242);
     }
 
     #[test]
     fn d5_ex3() {
-        let memory = vec![1102, 11, 22, 7, 4, 7, 99, 0];
-        let input: Vec<Intcode> = vec![];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &242);
+        let (input, sink) = channel();
+        input.send(8).unwrap();
+        let output = exec(&vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8], sink, None);
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
     fn d5_ex4() {
-        let memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
-        let input: Vec<Intcode> = vec![8];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+        let (input, sink) = channel();
+        input.send(7).unwrap();
+        let output = exec(&vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8], sink, None);
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex5() {
-        let memory = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
-        let input: Vec<Intcode> = vec![7];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(8).unwrap();
+        let output = exec(&vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8], sink, None);
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex6() {
-        let memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
-        let input: Vec<Intcode> = vec![8];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(7).unwrap();
+        let output = exec(&vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8], sink, None);
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
     fn d5_ex7() {
-        let memory = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
-        let input: Vec<Intcode> = vec![7];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+        let (input, sink) = channel();
+        input.send(8).unwrap();
+        let output = exec(&vec![3, 3, 1108, -1, 8, 3, 4, 3, 99], sink, None);
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
     fn d5_ex8() {
-        let memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
-        let input: Vec<Intcode> = vec![8];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+        let (input, sink) = channel();
+        input.send(7).unwrap();
+        let output = exec(&vec![3, 3, 1108, -1, 8, 3, 4, 3, 99], sink, None);
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex9() {
-        let memory = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
-        let input: Vec<Intcode> = vec![7];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(8).unwrap();
+        let output = exec(&vec![3, 3, 1107, -1, 8, 3, 4, 3, 99], sink, None);
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex10() {
-        let memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
-        let input: Vec<Intcode> = vec![8];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(7).unwrap();
+        let output = exec(&vec![3, 3, 1107, -1, 8, 3, 4, 3, 99], sink, None);
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
     fn d5_ex11() {
-        let memory = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
-        let input: Vec<Intcode> = vec![7];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+        let (input, sink) = channel();
+        input.send(0).unwrap();
+        let output = exec(
+            &vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9],
+            sink,
+            None,
+        );
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex12() {
-        let memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
-        let input: Vec<Intcode> = vec![0];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(13).unwrap();
+        let output = exec(
+            &vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9],
+            sink,
+            None,
+        );
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
     fn d5_ex13() {
-        let memory = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
-        let input: Vec<Intcode> = vec![13];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+        let (input, sink) = channel();
+        input.send(0).unwrap();
+        let output = exec(&vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1], sink, None);
+        assert_eq!(output.recv().unwrap(), 0);
     }
 
     #[test]
     fn d5_ex14() {
-        let memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
-        let input: Vec<Intcode> = vec![0];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &0);
+        let (input, sink) = channel();
+        input.send(13).unwrap();
+        let output = exec(&vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1], sink, None);
+        assert_eq!(output.recv().unwrap(), 1);
     }
 
     #[test]
-    fn d5_ex15() {
-        let memory = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
-        let input: Vec<Intcode> = vec![13];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1);
+    fn d5_d15() {
+        let memory = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let (input, sink) = channel();
+        input.send(5).unwrap();
+        let output = exec(&memory, sink, None);
+        assert_eq!(output.recv().unwrap(), 999);
     }
 
     #[test]
@@ -241,19 +179,10 @@ mod tests {
             0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
             20, 1105, 1, 46, 98, 99,
         ];
-        let input: Vec<Intcode> = vec![5];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &999);
-    }
-
-    #[test]
-    fn d5_d17() {
-        let memory = vec![
-            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
-            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
-            20, 1105, 1, 46, 98, 99,
-        ];
-        let input: Vec<Intcode> = vec![8];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1000);
+        let (input, sink) = channel();
+        input.send(8).unwrap();
+        let output = exec(&memory, sink, None);
+        assert_eq!(output.recv().unwrap(), 1000);
     }
 
     #[test]
@@ -263,8 +192,10 @@ mod tests {
             0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
             20, 1105, 1, 46, 98, 99,
         ];
-        let input: Vec<Intcode> = vec![17];
-        assert!(run(&memory, &mut input.into_iter()).first().unwrap() == &1001);
+        let (input, sink) = channel();
+        input.send(17).unwrap();
+        let output = exec(&memory, sink, None);
+        assert_eq!(output.recv().unwrap(), 1001);
     }
 
     const INPUT: &str =

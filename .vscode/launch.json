@@ -31,7 +31,9 @@
                     "test",
                     "--no-run",
                     "--bin=aoc2019",
-                    "--package=aoc2019"
+                    "--package=aoc2019",
+                    "--",
+                    "--test-threads=1"
                 ],
                 "filter": {
                     "name": "aoc2019",

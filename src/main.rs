@@ -2,6 +2,7 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+mod intcode;
 mod day1;
 mod day2;
 mod day3;

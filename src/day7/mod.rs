@@ -1,141 +1,35 @@
-use super::Solution;
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
 use permutohedron::LexicalPermutation;
-use Instruction::*;
-use ProgState::*;
+use std::sync::mpsc::*;
+use super::intcode::*;
+use super::Solution;
 
-type Intcode = i32;
 const NUM_AMPS: usize = 5;
-
-#[derive(Debug, FromPrimitive, PartialEq)]
-enum Instruction {
-    Add = 1,
-    Mul = 2,
-    In = 3,
-    Out = 4,
-    JmpIfTrue = 5,
-    JmpIfFalse = 6,
-    LessThan = 7,
-    Equals = 8,
-    Halt = 99,
-}
-
-#[derive(Copy, Clone, Debug)]
-enum ProgState {
-    Resume(usize),
-    Done,
-}
 
 // State required to solve day 7
 pub struct State {
     memory: Vec<Intcode>,
 }
 
-fn opcode_to_instr(opcode: Intcode) -> Instruction {
-    FromPrimitive::from_i32(opcode % 100).expect("Invalid instruction")
-}
-
-fn run(
-    mem: &mut Vec<Intcode>,
-    input: &mut dyn Iterator<Item = Intcode>,
-    first_ip: usize,
-    last_output: Intcode,
-) -> (Intcode, ProgState) {
-    let mut ip: usize = first_ip;
-    loop {
-        let mut st = None;
-        {
-            let opcode = mem[ip];
-            let is_imm = [
-                false,
-                opcode / 100 % 10 != 0,
-                opcode / 1000 % 10 != 0,
-                opcode / 10000 % 10 != 0,
-            ];
-            let ld_imm = |offset| mem[ip + offset as usize];
-            let ld = |offset| {
-                if is_imm[offset] {
-                    ld_imm(offset)
-                } else {
-                    mem[ld_imm(offset) as usize]
-                }
-            };
-            ip = match opcode_to_instr(opcode) {
-                Add => {
-                    st = Some((ld(1) + ld(2), ld_imm(3)));
-                    ip + 4
-                }
-                Mul => {
-                    st = Some((ld(1) * ld(2), ld_imm(3)));
-                    ip + 4
-                }
-                In => {
-                    st = Some((input.next().unwrap(), ld_imm(1)));
-                    ip + 2
-                }
-                Out => return (ld(1), Resume(ip + 2)),
-                JmpIfTrue => {
-                    if ld(1) != 0 {
-                        ld(2) as usize
-                    } else {
-                        ip + 3
-                    }
-                }
-                JmpIfFalse => {
-                    if ld(1) == 0 {
-                        ld(2) as usize
-                    } else {
-                        ip + 3
-                    }
-                }
-                LessThan => {
-                    st = Some((if ld(1) < ld(2) { 1 } else { 0 }, ld_imm(3)));
-                    ip + 4
-                }
-                Equals => {
-                    st = Some((if ld(1) == ld(2) { 1 } else { 0 }, ld_imm(3)));
-                    ip + 4
-                }
-                Halt => return (last_output, Done),
-            }
-        }
-        // All immutable borrows must go out of scope before it is OK to store
-        // to 'mem', so this kind of simulates "write-back" step in a CPU...
-        if let Some((val, addr)) = st {
-            mem[addr as usize] = val;
-        }
-    }
-}
-
 fn amplifiers(program: &Vec<Intcode>, phases: &[Intcode; NUM_AMPS]) -> Intcode {
-    let mut mems: Vec<Vec<Intcode>> = phases.iter().map(|_| program.clone()).collect();
-    let mut ips = [Resume(0); NUM_AMPS];
-    let mut outputs = [0; NUM_AMPS];
-    let mut result = 0;
-    let mut first = true;
-    'terminated: loop {
-        for (idx, &phase) in phases.iter().enumerate() {
-            if let Resume(ip) = ips[idx] {
-                let input = if first {
-                    vec![phase, result]
-                } else {
-                    vec![result]
-                };
-                let res = run(&mut mems[idx], &mut input.into_iter(), ip, outputs[idx]);
-                result = res.0;
-                ips[idx] = res.1;
-                outputs[idx] = result;
-            } else {
-                break 'terminated;
-            }
-        }
-        first = false;
+    let (input, sink) = channel();
+    let mut output = sink;
+    input.send(phases[0]).unwrap();
+    for i in 1..NUM_AMPS {
+        output = exec(program, output, Some(phases[i]))
     }
-    result
+    output = exec(program, output, None);
+    let mut final_thrust = 0;
+    input.send(0).unwrap();
+    while let Ok(thrust) = output.recv() {
+        final_thrust = thrust;
+        if let Err(_) = input.send(thrust) {
+            break;
+        }
+    }
+    final_thrust
 }
 
-fn run_with_phases(program: &Vec<Intcode>, phases: &mut [Intcode; NUM_AMPS]) -> Intcode {
+fn exec_with_phases(program: &Vec<Intcode>, phases: &mut [Intcode; NUM_AMPS]) -> Intcode {
     let mut thrusters_signal = Vec::new();
     loop {
         thrusters_signal.push(amplifiers(program, phases));
@@ -148,11 +42,11 @@ fn run_with_phases(program: &Vec<Intcode>, phases: &mut [Intcode; NUM_AMPS]) -> 
 
 impl Solution for State {
     fn part1(&self) -> String {
-        run_with_phases(&self.memory, &mut [0, 1, 2, 3, 4]).to_string()
+        exec_with_phases(&self.memory, &mut [0, 1, 2, 3, 4]).to_string()
     }
 
     fn part2(&self) -> String {
-        run_with_phases(&self.memory, &mut [5, 6, 7, 8, 9]).to_string()
+        exec_with_phases(&self.memory, &mut [5, 6, 7, 8, 9]).to_string()
     }
 }
 
