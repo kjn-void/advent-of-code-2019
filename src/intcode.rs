@@ -1,8 +1,7 @@
 use AddressMode::*;
 use Instruction::*;
 use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
-use num_traits::pow;
+use num_traits::*;
 use std::collections::HashMap;
 use std::sync::mpsc::*;
 use std::thread;
@@ -87,8 +86,8 @@ fn run(mem: &mut HashMap<Intcode, Intcode>, input: Receiver<Intcode>, output: Se
                     output.send(ld(1)).unwrap();
                     ip + 2
                 }
-                JmpIfTrue => jmp_if(&|val| val != 0),
-                JmpIfFalse => jmp_if(&|val| val == 0),
+                JmpIfTrue => jmp_if(&|a| a != 0),
+                JmpIfFalse => jmp_if(&|a| a == 0),
                 LessThan => binop(&|a, b| if a < b { 1 } else { 0 }),
                 Equals => binop(&|a, b| if a == b { 1 } else { 0 }),
                 AdjustBase => {
@@ -99,7 +98,7 @@ fn run(mem: &mut HashMap<Intcode, Intcode>, input: Receiver<Intcode>, output: Se
             }
         }
         // All immutable borrows must go out of scope before it is OK to store
-        // to 'mem', so this kind of simulates "write-back" step in a CPU...
+        // to memory, so this kind of simulates "write-back" step in a CPU...
         if let Some((val, addr)) = deferred_st {
             mem.insert(addr, val);
         }
