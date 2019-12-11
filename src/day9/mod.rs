@@ -4,20 +4,20 @@ use std::sync::mpsc::*;
 
 // State required to solve day _
 pub struct State {
-    memory: Vec<Intcode>,
+    program: Vec<Intcode>,
 }
 
 impl Solution for State {
     fn part1(&self) -> String {
         let (input, sink) = channel();
-        let output = exec(&self.memory, sink, None);
+        let output = exec(&self.program, sink, None);
         input.send(1).unwrap();
         output.recv().unwrap().to_string()
     }
 
     fn part2(&self) -> String {
         let (input, sink) = channel();
-        let output = exec(&self.memory, sink, None);
+        let output = exec(&self.program, sink, None);
         input.send(2).unwrap();
         output.recv().unwrap().to_string()
     }
@@ -25,7 +25,7 @@ impl Solution for State {
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     Box::new(State {
-        memory: lines[0]
+        program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())
             .collect(),

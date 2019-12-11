@@ -13,6 +13,7 @@ mod day7;
 mod day8;
 mod day9;
 mod day10;
+mod day11;
 
 type Day = u32;
 
@@ -37,6 +38,7 @@ fn solution_get(day: Day, input: &mut dyn BufRead) -> Box<dyn Solution> {
         8 => day8::solution(lines),
         9 => day9::solution(lines),
         10 => day10::solution(lines),
+        11 => day11::solution(lines),
         _ => panic!("Invalid day specified"),
     }
 }
