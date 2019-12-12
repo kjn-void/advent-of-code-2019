@@ -5,12 +5,6 @@ use std::sync::mpsc::*;
 
 type Coord = (i32, i32);
 
-#[derive(PartialEq)]
-enum Turn {
-    Left,
-    Right,
-}
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Paint {
     Black,
@@ -42,13 +36,9 @@ fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Coord, P
         } else {
             break;
         };
-        dir = match if output.recv().unwrap() == 0 {
-            Turn::Left
-        } else {
-            Turn::Right
-        } {
-            Turn::Left => (-dir.1, dir.0),
-            Turn::Right => (dir.1, -dir.0),
+        dir = match output.recv().unwrap() {
+            0 /* Left */ => (-dir.1, dir.0),
+            _ /* Right */ => (dir.1, -dir.0),
         };
         hull.insert(pos, color);
         pos.0 = pos.0 + dir.0;
@@ -63,23 +53,11 @@ fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Coord, P
 }
 
 fn bound_box(hull: &HashMap<Coord, Paint>) -> (Coord, Coord) {
-    let mut top_left = *hull.keys().next().unwrap();
-    let mut bottom_right = top_left;
-    for &pos in hull.keys() {
-        if top_left.0 > pos.0 {
-            top_left.0 = pos.0;
-        }
-        if top_left.1 > pos.1 {
-            top_left.1 = pos.1;
-        }
-        if bottom_right.0 < pos.0 {
-            bottom_right.0 = pos.0;
-        }
-        if bottom_right.1 < pos.1 {
-            bottom_right.1 = pos.1;
-        }
-    }
-    (top_left, bottom_right)
+    let top = hull.keys().map(|p|p.1).min().unwrap();
+    let left = hull.keys().map(|p|p.0).min().unwrap();
+    let bottom = hull.keys().map(|p|p.1).max().unwrap();
+    let right = hull.keys().map(|p|p.0).max().unwrap();
+    ((left, top), (right, bottom))
 }
 
 impl Solution for State {
