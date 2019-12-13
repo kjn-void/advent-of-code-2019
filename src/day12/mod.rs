@@ -165,7 +165,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ex1() {
+    fn d12_ex1() {
         let moons = parse_input(vec![
             "<x=-1, y=0, z=2>",
             "<x=2, y=-10, z=-7>",
