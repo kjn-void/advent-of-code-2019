@@ -1,8 +1,8 @@
 use super::Solution;
-use primes::factors_uniq;
+use num::integer::lcm;
 use regex::Regex;
-use std::ops::Add;
 use std::cmp::Ordering;
+use std::ops::Add;
 
 type PlanetSystem = Vec<Moon>;
 
@@ -119,21 +119,7 @@ impl Solution for State {
                 z = steps;
             }
         }
-        loop {
-            let fact = factors_uniq(x * y * z);
-            if let Some(denom) = fact
-                .iter()
-                .filter(|&d| x % d == 0 && y % d == 0 && z % d == 0)
-                .last()
-            {
-                x = x / denom;
-                y = y / denom;
-                z = z / denom;
-            } else {
-                break;
-            }
-        }
-        (x * y * z).to_string()
+        lcm(x, lcm(y, z)).to_string()
     }
 }
 
@@ -178,5 +164,27 @@ mod tests {
         let step2 = step_time(&step1);
         assert_eq!(step2[0].pos, Vec3 { x: 5, y: -3, z: -1 });
         assert_eq!(step2[0].vel, Vec3 { x: 3, y: -2, z: -2 });
+    }
+
+    #[test]
+    fn d12_ex2() {
+        let lines = vec![
+            "<x=17, y=-9, z=4>",
+            "<x=2, y=2, z=-13>",
+            "<x=-1, y=5, z=-1>",
+            "<x=4, y=7, z=-7>",
+        ];
+        assert_eq!(solution(lines).part2(), "537881600740876");
+    }
+
+    #[test]
+    fn d12_ex3() {
+        let lines = vec![
+            "<x=-8, y=-10, z=0>",
+            "<x=5, y=5, z=10>",
+            "<x=2, y=-7, z=3>",
+            "<x=9, y=-8, z=-3>",
+        ];
+        assert_eq!(solution(lines).part2(), "4686774924");
     }
 }
