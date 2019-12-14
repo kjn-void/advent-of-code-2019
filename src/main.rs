@@ -49,11 +49,15 @@ fn solution_get(day: Day, input: &mut dyn BufRead) -> Box<dyn Solution> {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
+    if args.len() < 2 {
         println!("Usage: {} DAY INPUT_FILE", args[0])
     } else {
         let day = args[1].parse::<Day>().unwrap();
-        let f = File::open(&args[2]).expect("Failed to open input file");
+        let f = if args.len() == 2 {
+            File::open(format!("src/day{}/input.txt", day))
+        } else {
+            File::open(&args[2])
+        }.expect("Failed to open input file");
         let mut input = BufReader::new(f);
         let solution = solution_get(day, &mut input);
         let start = std::time::Instant::now();

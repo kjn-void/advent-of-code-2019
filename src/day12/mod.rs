@@ -14,44 +14,40 @@ fn energy(planet_system: &PlanetSystem) -> i32 {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Vec3 {
-    x: i32,
-    y: i32,
-    z: i32,
+    v: [i32; 3],
+}
+
+fn binop(va: &Vec3, vb: &Vec3, op: &dyn Fn((&i32, &i32)) -> i32) -> Vec3 {
+    let result: Vec<i32> = va.v.iter().zip(vb.v.iter()).map(op).collect();
+    Vec3 {
+        v: [result[0], result[1], result[2]],
+    }
 }
 
 impl Vec3 {
     fn energy(&self) -> i32 {
-        self.x.abs() + self.y.abs() + self.z.abs()
+        self.v.iter().fold(0, |e, coord| e + coord.abs())
     }
 
     fn c_cmp(&self, other: Vec3) -> Vec3 {
-        let cmp = |a: i32, b: i32| match a.cmp(&b) {
+        binop(self, &other, &|(a, b)| match a.cmp(b) {
             Ordering::Less => -1,
             Ordering::Greater => 1,
             Ordering::Equal => 0,
-        };
-        Vec3 {
-            x: cmp(self.x, other.x),
-            y: cmp(self.y, other.y),
-            z: cmp(self.z, other.z),
-        }
+        })
     }
 }
 
 impl Add for Vec3 {
     type Output = Vec3;
     fn add(self, other: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-        }
+        binop(&self, &other, &|(a, b)| a + b)
     }
 }
 
 impl Default for Vec3 {
     fn default() -> Self {
-        Vec3 { x: 0, y: 0, z: 0 }
+        Vec3 { v: [0, 0, 0] }
     }
 }
 
@@ -93,33 +89,24 @@ impl Solution for State {
     }
 
     fn part2(&self) -> String {
-        let get_x = |v: Vec3| v.x;
-        let get_y = |v: Vec3| v.y;
-        let get_z = |v: Vec3| v.z;
         let chk = |moons: &PlanetSystem, get: &dyn Fn(Vec3) -> i32| {
             moons.iter().zip(self.moons.iter()).fold(true, |pred, m| {
                 pred && get(m.0.vel) == 0 && get(m.0.pos) == get(m.1.pos)
             })
         };
-        let mut x = 0;
-        let mut y = 0;
-        let mut z = 0;
+        let mut result = [0; 3];
         let mut steps: u64 = 0;
         let mut moons = self.moons.clone();
-        while x == 0 || y == 0 || z == 0 {
+        while result.iter().any(|&a| a == 0) {
             moons = step_time(&moons);
             steps = steps + 1;
-            if x == 0 && chk(&moons, &get_x) {
-                x = steps;
-            }
-            if y == 0 && chk(&moons, &get_y) {
-                y = steps;
-            }
-            if z == 0 && chk(&moons, &get_z) {
-                z = steps;
+            for dim in 0..result.len() {
+                if result[dim] == 0 && chk(&moons, &|v: Vec3| v.v[dim]) {
+                    result[dim] = steps;
+                }
             }
         }
-        lcm(x, lcm(y, z)).to_string()
+        lcm(result[0], lcm(result[1], result[2])).to_string()
     }
 }
 
@@ -130,9 +117,11 @@ fn parse_input(lines: Vec<&str>) -> PlanetSystem {
         let caps = re.captures(line).unwrap();
         planet_system.push(Moon {
             pos: Vec3 {
-                x: caps["x"].parse::<i32>().unwrap(),
-                y: caps["y"].parse::<i32>().unwrap(),
-                z: caps["z"].parse::<i32>().unwrap(),
+                v: [
+                    caps["x"].parse::<i32>().unwrap(),
+                    caps["y"].parse::<i32>().unwrap(),
+                    caps["z"].parse::<i32>().unwrap(),
+                ],
             },
             vel: Vec3::default(),
         });
@@ -159,26 +148,15 @@ mod tests {
             "<x=3, y=5, z=-1>",
         ]);
         let step1 = step_time(&moons);
-        assert_eq!(step1[0].pos, Vec3 { x: 2, y: -1, z: 1 });
-        assert_eq!(step1[0].vel, Vec3 { x: 3, y: -1, z: -1 });
+        assert_eq!(step1[0].pos, Vec3 { v: [2, -1, 1] });
+        assert_eq!(step1[0].vel, Vec3 { v: [3, -1, -1] });
         let step2 = step_time(&step1);
-        assert_eq!(step2[0].pos, Vec3 { x: 5, y: -3, z: -1 });
-        assert_eq!(step2[0].vel, Vec3 { x: 3, y: -2, z: -2 });
+        assert_eq!(step2[0].pos, Vec3 { v: [5, -3, -1] });
+        assert_eq!(step2[0].vel, Vec3 { v: [3, -2, -2] });
     }
 
     #[test]
-    fn d12_ex2() {
-        let lines = vec![
-            "<x=17, y=-9, z=4>",
-            "<x=2, y=2, z=-13>",
-            "<x=-1, y=5, z=-1>",
-            "<x=4, y=7, z=-7>",
-        ];
-        assert_eq!(solution(lines).part2(), "537881600740876");
-    }
-
-    #[test]
-    fn d12_ex3() {
+    fn d12_part1() {
         let lines = vec![
             "<x=-8, y=-10, z=0>",
             "<x=5, y=5, z=10>",
@@ -186,5 +164,16 @@ mod tests {
             "<x=9, y=-8, z=-3>",
         ];
         assert_eq!(solution(lines).part2(), "4686774924");
+    }
+
+    #[test]
+    fn d12_part2() {
+        let lines = vec![
+            "<x=17, y=-9, z=4>",
+            "<x=2, y=2, z=-13>",
+            "<x=-1, y=5, z=-1>",
+            "<x=4, y=7, z=-7>",
+        ];
+        assert_eq!(solution(lines).part2(), "537881600740876");
     }
 }
