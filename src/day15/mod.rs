@@ -6,6 +6,11 @@ use std::sync::mpsc::*;
 
 type Map = HashMap<Vec2D, Tile>;
 
+enum Action {
+    Do((Dir, Vec2D)),
+    Undo((Dir, Vec2D)),
+}
+
 #[derive(Debug, PartialEq)]
 enum Dir {
     North,
@@ -74,34 +79,42 @@ fn next_pos(pos: Vec2D, pred: &dyn Fn(&Vec2D) -> bool) -> Vec<Vec2D> {
     .collect()
 }
 
-fn depth_first(
-    pos: Vec2D,
-    map: &mut Map,
-    joystick: &Sender<Intcode>,
-    droid: &Receiver<Intcode>,
-) {
-    for np in next_pos(pos, &|p| !map.contains_key(p)) {
-        let (dir, undo) = to_dirs(np, pos);
-        joystick.send(from_dir(dir)).unwrap();
-        let tile = to_tile(droid.recv().unwrap());
-        map.insert(np, tile);
-        if tile != Tile::Wall {
-            depth_first(np, map, joystick, droid);
-            joystick.send(from_dir(undo)).unwrap();
-            if to_tile(droid.recv().unwrap()) != Tile::Space {
-                panic!("Failed to undo move");
-            }
-        }
-    }
-}
-
 fn explore_map(program: &Vec<Intcode>) -> Map {
     let (joystick, sink) = channel();
-    let output = exec(program, sink, None);
+    let droid = exec(program, sink, None);
     let mut map = HashMap::new();
-    map.insert(Vec2D { x: 0, y: 0 }, Tile::Space);
-    depth_first(Vec2D { x: 0, y: 0 }, &mut map, &joystick, &output);
-    map
+    let mut pos = Vec2D { x: 0, y: 0 };
+    let mut stack = Vec::new();
+    loop {
+        for next_pos in next_pos(pos, &|p| !map.contains_key(p)) {
+            let (dir, undo) = to_dirs(next_pos, pos);
+            stack.push(Action::Undo((undo, pos)));
+            stack.push(Action::Do((dir, next_pos)));
+        }
+        if let Some(action) = stack.pop() {
+            match action {
+                Action::Do((dir, next_pos)) => {
+                    joystick.send(from_dir(dir)).unwrap();
+                    let tile = to_tile(droid.recv().unwrap());
+                    map.insert(next_pos, tile);
+                    if tile == Tile::Wall {
+                        stack.pop();
+                    } else {
+                        pos = next_pos;
+                    }
+                },
+                Action::Undo((dir, prev_pos)) => {
+                    joystick.send(from_dir(dir)).unwrap();
+                    if to_tile(droid.recv().unwrap()) != Tile::Space {
+                        panic!("Failed to undo move");
+                    }
+                    pos = prev_pos;
+                },
+            }
+        } else {
+            break map
+        }
+    }
 }
 
 fn fill_map_with_oxygen(map: &mut Map) -> (u32, u32) {
