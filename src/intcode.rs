@@ -79,8 +79,12 @@ fn run(mem: &mut HashMap<Intcode, Intcode>, input: Receiver<Intcode>, output: Se
                 Add => binop(&|a, b| a + b),
                 Mul => binop(&|a, b| a * b),
                 In => {
-                    deferred_st = st(1, input.recv().unwrap());
-                    ip + 2
+                    if let Ok(val) = input.recv() {
+                        deferred_st = st(1, val);
+                        ip + 2
+                    } else {
+                        break;
+                    }
                 }
                 Out => {
                     output.send(ld(1)).unwrap();
