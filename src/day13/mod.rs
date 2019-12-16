@@ -1,21 +1,10 @@
-use super::intcode::*;
-use super::Solution;
 use std::collections::HashMap;
 use std::sync::mpsc::*;
+use super::intcode::*;
+use super::Solution;
+use super::vec2d::*;
 
 type Screen = HashMap<Vec2D, Tile>;
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-struct Vec2D {
-    x: i32,
-    y: i32,
-}
-
-impl Default for Vec2D {
-    fn default() -> Self {
-        Vec2D { x: 0, y: 0 }
-    }
-}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Tile {
@@ -25,11 +14,6 @@ enum Tile {
     Paddle,
     Ball,
     Score(i32),
-}
-
-// State required to solve day 13
-pub struct State {
-    program: Vec<Intcode>,
 }
 
 fn to_tile(tile_id: Intcode, x: Intcode, y: Intcode) -> Tile {
@@ -51,10 +35,7 @@ fn next_tile(output: &Receiver<Intcode>) -> Option<(Vec2D, Tile)> {
         let y = output.recv().unwrap();
         let tile_id = output.recv().unwrap();
         Some((
-            Vec2D {
-                x: x as i32,
-                y: y as i32,
-            },
+            Vec2D::from(x as Coord, y as Coord),
             to_tile(tile_id, x, y),
         ))
     } else {
@@ -65,13 +46,13 @@ fn next_tile(output: &Receiver<Intcode>) -> Option<(Vec2D, Tile)> {
 fn render(screen: &Screen) {
     let mut line = 0;
     let mut x = 0;
-    let max_y = screen.keys().max_by(|a, b| a.y.cmp(&b.y)).unwrap().y;
+    let max_y = screen.keys().max_by(|a, b| a.y().cmp(&b.y())).unwrap().y();
     print!("{}[2J", 27 as char); // clear console
-    if let Some(Tile::Score(val)) = screen.get(&Vec2D { x: -1, y: 0 }) {
+    if let Some(Tile::Score(val)) = screen.get(&Vec2D::from(-1, 0)) {
         println!("Score: {}", val);
     }
     loop {
-        let pos = Vec2D { x: x, y: line };
+        let pos = Vec2D::from(x, line);
         x = x + 1;
         if let Some(tile) = screen.get(&pos) {
             print!(
@@ -128,9 +109,9 @@ impl Solution for State {
                 Tile::Ball => {
                     let ball = tile.0;
                     joystick.send(
-                        if ball.x < paddle.x {
+                        if ball.x() < paddle.x() {
                             -1
-                        } else if ball.x > paddle.x {
+                        } else if ball.x() > paddle.x() {
                             1
                         } else {
                             0
@@ -142,6 +123,11 @@ impl Solution for State {
         }
         final_score.to_string()
     }
+}
+
+// State required to solve day 13
+pub struct State {
+    program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

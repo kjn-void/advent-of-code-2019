@@ -7,19 +7,6 @@ const HEIGHT: usize = 6;
 const BLACK: char = '0';
 const TRANSPARENT: char = '2';
 
-// State required to solve day 8
-pub struct State {
-    layers: Vec<String>,
-}
-
-pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    let mut layers = Vec::new();
-    for layer in &lines[0].chars().chunks(WIDTH * HEIGHT) {
-        layers.push(layer.collect());
-    }
-    Box::new(State { layers: layers })
-}
-
 fn render(layers: &Vec<String>, width: usize, height: usize) -> Vec<String> {
     let mut image = Vec::new();
     for h in 0..height {
@@ -61,6 +48,19 @@ impl Solution for State {
         let msg = render(&self.layers, WIDTH, HEIGHT);
         "\n".to_string() + &msg.join("\n")
     }
+}
+
+// State required to solve day 8
+pub struct State {
+    layers: Vec<String>,
+}
+
+pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
+    let mut layers = Vec::new();
+    for layer in &lines[0].chars().chunks(WIDTH * HEIGHT) {
+        layers.push(layer.collect());
+    }
+    Box::new(State { layers: layers })
 }
 
 #[cfg(test)]

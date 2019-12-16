@@ -5,11 +5,6 @@ use super::Solution;
 
 const NUM_AMPS: usize = 5;
 
-// State required to solve day 7
-pub struct State {
-    memory: Vec<Intcode>,
-}
-
 fn amplifiers(program: &Vec<Intcode>, phases: &[Intcode; NUM_AMPS]) -> Intcode {
     let (input, sink) = channel();
     let mut output = sink;
@@ -48,6 +43,11 @@ impl Solution for State {
     fn part2(&self) -> String {
         exec_with_phases(&self.memory, &mut [5, 6, 7, 8, 9]).to_string()
     }
+}
+
+// State required to solve day 7
+pub struct State {
+    memory: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

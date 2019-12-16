@@ -1,78 +1,28 @@
-use super::Solution;
 use regex::Regex;
 use std::collections::HashMap;
-use Direction::*;
-
-type Distance = u32;
-type Coord = i32;
-
-// State required to solve day 3
-pub struct State {
-    line_a: Vec<Movement>,
-    line_b: Vec<Movement>,
-}
-
-#[derive(Clone, Copy, Debug)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
+use super::Solution;
+use super::vec2d::*;
 
 struct Movement {
-    dir: Direction,
+    dir: Dir,
     distance: Distance,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct Pos {
-    x: Coord,
-    y: Coord,
-}
-
-impl Pos {
-    // Start position is really arbitrary in this case
-    fn start() -> Pos {
-        Pos { x: 0, y: 0 }
-    }
-    fn manhattan_distance(&self, pos: Pos) -> Distance {
-        ((self.x - pos.x).abs() + (self.y - pos.y).abs()) as Distance
-    }
-    // Move the position n steps in a specific direction, return all position(s)
-    // along the way, including the final position
-    fn step_n(&mut self, n: Distance, dir: Direction) -> Vec<Pos> {
-        let mut path = Vec::new();
-        let (dx, dy) = match dir {
-            Up => (0, -1),
-            Down => (0, 1),
-            Left => (-1, 0),
-            Right => (1, 0),
-        };
-        for _ in 0..n {
-            self.x = self.x + dx;
-            self.y = self.y + dy;
-            path.push(*self);
-        }
-        path
-    }
-}
-
-fn dir_parse(repr: &str) -> Direction {
+fn dir_parse(repr: &str) -> Dir {
     match repr {
-        "U" => Up,
-        "D" => Down,
-        "R" => Right,
-        "L" => Left,
+        "U" => Dir::Up,
+        "D" => Dir::Down,
+        "R" => Dir::Right,
+        "L" => Dir::Left,
         _ => panic!("Invalid direction"),
     }
 }
 
 // Returns all position a line passes through and the distance from start for
 // each position.
-fn line_trace(line: &Vec<Movement>) -> HashMap<Pos, Distance> {
+fn line_trace(line: &Vec<Movement>) -> HashMap<Vec2D, Distance> {
     let mut trace = HashMap::new();
-    let mut p = Pos::start();
+    let mut p = Vec2D::default();
     let mut distance = 0;
     for m in line {
         let path = p.step_n(m.distance, m.dir);
@@ -87,12 +37,12 @@ fn line_trace(line: &Vec<Movement>) -> HashMap<Pos, Distance> {
 impl Solution for State {
     fn part1(&self) -> String {
         let trace = line_trace(&self.line_a);
-        let mut p = Pos::start();
+        let mut p = Vec2D::default();
         self.line_b
             .iter()
             .flat_map(|m| p.step_n(m.distance, m.dir))
             .filter(|pos| trace.contains_key(pos))
-            .map(|pos| pos.manhattan_distance(Pos::start()))
+            .map(|pos| pos.manhattan_distance(Vec2D::default()))
             .min()
             .unwrap()
             .to_string()
@@ -102,7 +52,7 @@ impl Solution for State {
         let trace = line_trace(&self.line_a);
         let mut min_distance = std::u32::MAX;
         let mut dist_b = 0;
-        let mut p = Pos::start();
+        let mut p = Vec2D::default();
         for m in &self.line_b {
             let path = p.step_n(m.distance, m.dir);
             for pos in &path {
@@ -114,6 +64,12 @@ impl Solution for State {
         }
         min_distance.to_string()
     }
+}
+
+// State required to solve day 3
+pub struct State {
+    line_a: Vec<Movement>,
+    line_b: Vec<Movement>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

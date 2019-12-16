@@ -5,13 +5,16 @@ pub const SOUTH: Vec2D = Vec2D{x: 0, y: -1};
 pub const WEST: Vec2D = Vec2D{x: -1, y: 0};
 pub const EAST: Vec2D = Vec2D{x: 1, y: 0};
 
-#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
+pub type Coord = i32;
+pub type Distance = u32;
+
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, PartialOrd)]
 pub struct Vec2D {
-    x: i32,
-    y: i32,
+    x: Coord,
+    y: Coord,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Dir {
     Up,
     Down,
@@ -34,6 +37,14 @@ pub enum Turn {
 }
 
 impl Vec2D {
+    pub fn x(&self) -> Coord {
+        self.x
+    }
+
+    pub fn y(&self) -> Coord {
+        self.y
+    }
+
     pub fn from(x: i32, y: i32) -> Vec2D {
         Vec2D{x: x, y: y}
     }
@@ -50,10 +61,10 @@ impl Vec2D {
 
     pub fn from_dir(dir: Dir) -> Vec2D {
         match dir {
-            Dir::Up => Vec2D::from(1, 0),
-            Dir::Down => Vec2D::from(-1, 0),
-            Dir::Left => Vec2D::from(0, -1),
-            Dir::Right => Vec2D::from(0, 1),
+            Dir::Up => Vec2D::from(0, 1),
+            Dir::Down => Vec2D::from(0, -1),
+            Dir::Left => Vec2D::from(-1, 0),
+            Dir::Right => Vec2D::from(1, 0),
         }
     }
 
@@ -63,6 +74,20 @@ impl Vec2D {
         } else {
             Vec2D::from(-self.y, self.x)
         }
+    }
+
+    pub fn manhattan_distance(&self, pos: Vec2D) -> Distance {
+        ((self.x - pos.x).abs() + (self.y - pos.y).abs()) as Distance
+    }
+
+    pub fn step_n(&mut self, n: Distance, dir: Dir) -> Vec<Vec2D> {
+        let mut path = Vec::new();
+        let dir_vec = Vec2D::from_dir(dir);
+        for _ in 0..n {
+            *self += dir_vec;
+            path.push(*self);
+        }
+        path
     }
 } 
 
@@ -77,6 +102,13 @@ impl Add for Vec2D {
 
     fn add(self, other: Self) -> Self {
         Vec2D{ x: self.x + other.x, y: self.y + other.y }
+    }
+}
+
+impl AddAssign for Vec2D {
+    fn add_assign(&mut self, other: Self) {
+        self.x += other.x;
+        self.y += other.y;
     }
 }
 

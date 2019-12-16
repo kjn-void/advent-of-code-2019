@@ -2,11 +2,6 @@ use super::intcode::*;
 use super::Solution;
 use std::sync::mpsc::*;
 
-// State required to solve day _
-pub struct State {
-    program: Vec<Intcode>,
-}
-
 impl Solution for State {
     fn part1(&self) -> String {
         let (input, sink) = channel();
@@ -21,6 +16,11 @@ impl Solution for State {
         input.send(2).unwrap();
         output.recv().unwrap().to_string()
     }
+}
+
+// State required to solve day 9
+pub struct State {
+    program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

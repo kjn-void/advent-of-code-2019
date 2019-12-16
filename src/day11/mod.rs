@@ -1,9 +1,8 @@
 use super::intcode::*;
+use super::vec2d::*;
 use super::Solution;
 use std::collections::HashMap;
 use std::sync::mpsc::*;
-
-type Coord = (i32, i32);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Paint {
@@ -11,17 +10,12 @@ enum Paint {
     White,
 }
 
-// State required to solve day 11
-pub struct State {
-    program: Vec<Intcode>,
-}
-
-fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Coord, Paint> {
+fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Vec2D, Paint> {
     let (input, sink) = channel();
     let output = exec(program, sink, None);
     let mut hull = HashMap::new();
-    let mut pos = (0, 0);
-    let mut dir = (0, 1); // Facing up
+    let mut pos = Vec2D::default();
+    let mut dir = Vec2D::from_dir(Dir::Up);
     let mut color_cur_tile = start_tile_col;
     loop {
         if let Err(_) = input.send(if color_cur_tile == Paint::Black { 0 } else { 1 }) {
@@ -37,12 +31,11 @@ fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Coord, P
             break;
         };
         dir = match output.recv().unwrap() {
-            0 /* Left */ => (-dir.1, dir.0),
-            _ /* Right */ => (dir.1, -dir.0),
+            0 => dir.turn(Turn::Counterclockwise),
+            _ => dir.turn(Turn::Clockwise),
         };
         hull.insert(pos, color);
-        pos.0 = pos.0 + dir.0;
-        pos.1 = pos.1 + dir.1;
+        pos += dir;
         color_cur_tile = if let Some(&color) = hull.get(&pos) {
             color
         } else {
@@ -52,12 +45,12 @@ fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Coord, P
     hull
 }
 
-fn bound_box(hull: &HashMap<Coord, Paint>) -> (Coord, Coord) {
-    let top = hull.keys().map(|p|p.1).min().unwrap();
-    let left = hull.keys().map(|p|p.0).min().unwrap();
-    let bottom = hull.keys().map(|p|p.1).max().unwrap();
-    let right = hull.keys().map(|p|p.0).max().unwrap();
-    ((left, top), (right, bottom))
+fn bound_box(hull: &HashMap<Vec2D, Paint>) -> (Vec2D, Vec2D) {
+    let top = hull.keys().map(|p| p.y()).min().unwrap();
+    let left = hull.keys().map(|p| p.x()).min().unwrap();
+    let bottom = hull.keys().map(|p| p.y()).max().unwrap();
+    let right = hull.keys().map(|p| p.x()).max().unwrap();
+    (Vec2D::from(left, top), Vec2D::from(right, bottom))
 }
 
 impl Solution for State {
@@ -69,20 +62,29 @@ impl Solution for State {
         let hull = paint_hull(&self.program, Paint::White);
         let (tl, br) = bound_box(&hull);
         let mut plate = Vec::new();
-        for y in (tl.1..=br.1).rev() {
+        for y in (tl.y()..=br.y()).rev() {
             plate.push('\n');
-            for x in tl.0..=br.0 {
-                let pos = (x as i32, y as i32);
+            for x in tl.x()..=br.x() {
+                let pos = Vec2D::from(x, y);
                 let ch = if let Some(&col) = hull.get(&pos) {
-                    if col == Paint::Black { '▒' } else { '█' }
+                    if col == Paint::Black {
+                        '▒'
+                    } else {
+                        '█'
+                    }
                 } else {
                     '▒'
                 };
                 plate.push(ch);
             }
-        };
+        }
         plate.iter().collect()
     }
+}
+
+// State required to solve day 11
+pub struct State {
+    program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

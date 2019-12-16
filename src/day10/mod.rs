@@ -1,3 +1,4 @@
+use super::vec2d::*;
 use super::Solution;
 use std::collections::HashSet;
 use MapContent::*;
@@ -8,67 +9,59 @@ enum MapContent {
     Astroid,
 }
 
-type Coord = (i32, i32);
-
 #[derive(Clone, Copy)]
 struct Visible {
-    pos: Coord,
+    pos: Vec2D,
     count: usize,
 }
 
-// State required to solve day 10
-pub struct State {
-    map: Vec<Vec<MapContent>>,
-}
-
-fn is_on_map(pos: Coord, width: i32, height: i32) -> bool {
-    pos.0 >= 0 && pos.1 >= 0 && pos.0 < width && pos.1 < height
+fn is_on_map(pos: Vec2D, width: Coord, height: Coord) -> bool {
+    pos >= Vec2D::default() && pos < Vec2D::from(width, height)
 }
 
 fn hit(
     map: &Vec<Vec<MapContent>>,
-    removed: &HashSet<Coord>,
-    origin: Coord,
-    dir: Coord,
-) -> Option<Coord> {
+    removed: &HashSet<Vec2D>,
+    origin: Vec2D,
+    dir: Vec2D,
+) -> Option<Vec2D> {
     let mut pos = origin;
     loop {
-        pos.0 = pos.0 + dir.0;
-        pos.1 = pos.1 + dir.1;
+        pos += dir;
         if !is_on_map(pos, map[0].len() as i32, map.len() as i32) {
             return None;
         }
-        if !removed.contains(&pos) && map[pos.1 as usize][pos.0 as usize] == Astroid {
+        if !removed.contains(&pos) && map[pos.y() as usize][pos.x() as usize] == Astroid {
             return Some(pos);
         }
     }
 }
 
-fn is_visible(map: &Vec<Vec<MapContent>>, from: Coord, to: Coord, dir: Coord) -> bool {
+fn is_visible(map: &Vec<Vec<MapContent>>, from: Vec2D, to: Vec2D, dir: Vec2D) -> bool {
     if let Some(pos) = hit(map, &HashSet::new(), from, dir) {
         if pos == to {
-            return true
+            return true;
         }
     }
     false
 }
 
-
-fn dir_vector(base: Coord, pos: Coord) -> Coord {
-    let dx = pos.0 - base.0;
-    let dy = pos.1 - base.1;
+fn dir_vector(base: Vec2D, pos: Vec2D) -> Vec2D {
+    let dx = pos.x() - base.x();
+    let dy = pos.y() - base.y();
     let gcd = num::integer::gcd(dx, dy);
-    (dx / gcd, dy / gcd)
+    Vec2D::from(dx / gcd, dy / gcd)
 }
 
-fn count_visible(map: &Vec<Vec<MapContent>>, pos: Coord) -> usize {
+fn count_visible(map: &Vec<Vec<MapContent>>, pos: Vec2D) -> usize {
     let mut count = 0;
     for row in 0..map.len() {
         let y = row as i32;
         for col in 0..map[row].len() {
             let x = col as i32;
-            if map[row][col] == Astroid && (x != pos.0 || y != pos.1) {
-                if is_visible(map, pos, (x, y), dir_vector(pos, (x, y))) {
+            if map[row][col] == Astroid && (x != pos.x() || y != pos.y()) {
+                let looking_at = Vec2D::from(x, y);
+                if is_visible(map, pos, looking_at, dir_vector(pos, looking_at)) {
                     count = count + 1;
                 }
             }
@@ -84,9 +77,10 @@ fn to_visibles(map: &Vec<Vec<MapContent>>) -> Vec<Visible> {
         for col in 0..map[row].len() {
             let x = col as i32;
             if map[row][col] == Astroid {
+                let pos = Vec2D::from(x, y);
                 v.push(Visible {
-                    pos: (x, y),
-                    count: count_visible(map, (x, y)),
+                    pos: pos,
+                    count: count_visible(map, pos),
                 });
             }
         }
@@ -101,8 +95,8 @@ fn select_best_astroid(map: &Vec<Vec<MapContent>>) -> Visible {
         .unwrap()
 }
 
-fn angle(pos: Coord) -> f64 {
-    let a = (-pos.1 as f64).atan2(-pos.0 as f64) * 180.0 / 3.1415;
+fn angle(pos: Vec2D) -> f64 {
+    let a = (-pos.y() as f64).atan2(-pos.x() as f64) * 180.0 / 3.1415;
     if a < 90.0 {
         a + 360.0
     } else {
@@ -110,11 +104,11 @@ fn angle(pos: Coord) -> f64 {
     }
 }
 
-fn unique_dir_vecs(map: &Vec<Vec<MapContent>>, laser_pos: Coord) -> Vec<Coord> {
+fn unique_dir_vecs(map: &Vec<Vec<MapContent>>, laser_pos: Vec2D) -> Vec<Vec2D> {
     let mut dir_vecs = Vec::new();
     for row in 0..map.len() {
         for col in 0..map[row].len() {
-            let pos = (col as i32, row as i32);
+            let pos = Vec2D::from(col as Coord, row as Coord);
             if map[row][col] == Astroid && laser_pos != pos {
                 dir_vecs.push(dir_vector(laser_pos, pos));
             }
@@ -125,7 +119,7 @@ fn unique_dir_vecs(map: &Vec<Vec<MapContent>>, laser_pos: Coord) -> Vec<Coord> {
     dir_vecs
 }
 
-fn nth_destroyed(nth: usize, map: &Vec<Vec<MapContent>>, laser_pos: Coord) -> Coord {
+fn nth_destroyed(nth: usize, map: &Vec<Vec<MapContent>>, laser_pos: Vec2D) -> Vec2D {
     let mut removed = HashSet::new();
     let dir_vecs = unique_dir_vecs(&map, laser_pos);
     let mut n = nth;
@@ -133,7 +127,7 @@ fn nth_destroyed(nth: usize, map: &Vec<Vec<MapContent>>, laser_pos: Coord) -> Co
     loop {
         let &dir = dir_it.next().unwrap();
         if let Some(pos) = hit(&map, &removed, laser_pos, dir) {
-                removed.insert(pos);
+            removed.insert(pos);
             n = n - 1;
             if n == 0 {
                 return pos;
@@ -150,8 +144,13 @@ impl Solution for State {
     fn part2(&self) -> String {
         let p = select_best_astroid(&self.map).pos;
         let pos = nth_destroyed(200, &self.map, p);
-        (pos.0 * 100 + pos.1).to_string()
+        (pos.x() * 100 + pos.y()).to_string()
     }
+}
+
+// State required to solve day 10
+pub struct State {
+    map: Vec<Vec<MapContent>>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {

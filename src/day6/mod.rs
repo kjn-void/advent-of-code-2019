@@ -3,25 +3,6 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-// State required to solve day 6
-pub struct State {
-    orbiting: HashMap<String, String>,
-}
-
-pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
-        orbiting: lines
-            .iter()
-            .map(|line| {
-                let mut s = line.split(")");
-                let center = s.next().unwrap().to_string();
-                let satellite = s.next().unwrap().to_string();
-                (satellite, center)
-            })
-            .collect(),
-    })
-}
-
 // Body centers, from outermost satellite body to world center body
 fn centers(orbiting: &HashMap<String, String>, outermost: &String) -> Vec<String> {
     let mut satellite = Some(outermost);
@@ -50,6 +31,25 @@ impl Solution for State {
         let ss: HashSet<String> = HashSet::from_iter(san.into_iter().skip(1));
         ys.symmetric_difference(&ss).count().to_string()
     }
+}
+
+// State required to solve day 6
+pub struct State {
+    orbiting: HashMap<String, String>,
+}
+
+pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
+    Box::new(State {
+        orbiting: lines
+            .iter()
+            .map(|line| {
+                let mut s = line.split(")");
+                let center = s.next().unwrap().to_string();
+                let satellite = s.next().unwrap().to_string();
+                (satellite, center)
+            })
+            .collect(),
+    })
 }
 
 #[cfg(test)]

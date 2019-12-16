@@ -1,6 +1,5 @@
 use super::Solution;
 use itertools::Itertools;
-use num_traits::pow;
 
 const FFT_PATTERN: [i32; 4] = [0, 1, 0, -1];
 
@@ -37,7 +36,7 @@ impl Iterator for FftPattern {
     }
 }
 
-fn phase(input: &Vec<i32>) -> Vec<i32> {
+fn normal_phase(input: &Vec<i32>) -> Vec<i32> {
     (1..=input.len())
         .map(|idx| {
             input
@@ -50,37 +49,49 @@ fn phase(input: &Vec<i32>) -> Vec<i32> {
         .collect()
 }
 
+fn rev_phase(input: &Vec<i32>) -> Vec<i32> {
+    input
+        .iter()
+        .rev()
+        .scan(0, |tot, &n| {
+            *tot += n;
+            Some((*tot).abs() % 10)
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect::<Vec<_>>()
+}
+
+fn fft(signal: &Vec<i32>, phase: &dyn Fn(&Vec<i32>) -> Vec<i32>) -> String {
+    (0..100)
+        .fold(signal.clone(), |signal, _| phase(&signal))
+        .iter()
+        .take(8)
+        .map(|digit| digit.to_string())
+        .join("")
+}
+
 impl Solution for State {
     fn part1(&self) -> String {
-        (0..100)
-            .fold(self.signal.clone(), |signal, _| phase(&signal))
-            .iter()
-            .take(8)
-            .map(|d| d.to_string())
-            .join("")
+        fft(&self.signal, &normal_phase)
     }
 
     fn part2(&self) -> String {
-        let mut real_signal = Vec::new();
-        for _ in 0..10000 {
-            let mut s = self.signal.clone();
-            real_signal.append(&mut s);
-        }
-        let offset = real_signal
+        let offset = self.signal
             .iter()
-            .enumerate()
             .take(7)
-            .map(|(i, &n)| pow(10, 6 - i) * n as usize)
-            .sum();
-        real_signal = real_signal.into_iter().skip(offset).collect();
-        for _ in 0..100 {
-            let mut tot = 0;
-            for i in (0..real_signal.len()).rev() {
-                tot += real_signal[i];
-                real_signal[i] = tot.abs() % 10;
-            }
-        }
-        real_signal.iter().take(8).join("")
+            .join("")
+            .parse::<usize>()
+            .unwrap();
+        let real_signal = self.signal
+            .clone()
+            .into_iter()
+            .cycle()
+            .take(10000 * self.signal.len())
+            .skip(offset)
+            .collect::<Vec<_>>();
+        fft(&real_signal, &rev_phase)
     }
 }
 
