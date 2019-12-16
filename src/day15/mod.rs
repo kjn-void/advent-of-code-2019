@@ -1,4 +1,5 @@
 use super::intcode::*;
+use super::vec2d::*;
 use super::Solution;
 use std::collections::HashMap;
 use std::collections::VecDeque;
@@ -7,42 +8,8 @@ use std::sync::mpsc::*;
 type Map = HashMap<Vec2D, Tile>;
 
 enum Action {
-    Do((Dir, Vec2D)),
-    Undo((Dir, Vec2D)),
-}
-
-#[derive(Debug, PartialEq)]
-enum Dir {
-    North,
-    South,
-    West,
-    East,
-}
-
-// Tuple with direction forward and direction to undo
-fn to_dirs(to: Vec2D, from: Vec2D) -> (Dir, Dir) {
-    if to.x == from.x {
-        if to.y > from.y {
-            (Dir::North, Dir::South)
-        } else {
-            (Dir::South, Dir::North)
-        }
-    } else {
-        if to.x > from.x {
-            (Dir::East, Dir::West)
-        } else {
-            (Dir::West, Dir::East)
-        }
-    }
-}
-
-fn from_dir(dir: Dir) -> Intcode {
-    match dir {
-        Dir::North => 1,
-        Dir::South => 2,
-        Dir::West => 3,
-        _ => 4,
-    }
+    Do((Compass, Vec2D)),
+    Undo((Compass, Vec2D)),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -52,7 +19,7 @@ enum Tile {
     Oxygen,
 }
 
-fn to_tile(ic: Intcode) -> Tile {
+fn intcode_to_tile(ic: Intcode) -> Tile {
     match ic {
         0 => Tile::Wall,
         1 => Tile::Space,
@@ -61,65 +28,70 @@ fn to_tile(ic: Intcode) -> Tile {
     }
 }
 
-#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
-struct Vec2D {
-    x: i32,
-    y: i32,
+fn compass_to_intcode(compass: Compass) -> Intcode {
+    match compass {
+        Compass::North => 1,
+        Compass::South => 2,
+        Compass::West => 3,
+        _ => 4,
+    }
 }
 
 fn next_pos(pos: Vec2D, pred: &dyn Fn(&Vec2D) -> bool) -> Vec<Vec2D> {
-    vec![
-        Vec2D { x: pos.x, y: pos.y + 1 },
-        Vec2D { x: pos.x, y: pos.y - 1 },
-        Vec2D { x: pos.x - 1, y: pos.y },
-        Vec2D { x: pos.x + 1, y: pos.y },
-    ]
-    .into_iter()
-    .filter(pred)
-    .collect()
+    vec![NORTH, SOUTH, WEST, EAST]
+        .iter()
+        .map(|&d| pos + d)
+        .filter(pred)
+        .collect()
 }
 
 fn explore_map(program: &Vec<Intcode>) -> Map {
     let (joystick, sink) = channel();
     let droid = exec(program, sink, None);
     let mut map = HashMap::new();
-    let mut pos = Vec2D { x: 0, y: 0 };
+    let mut pos = Vec2D::default();
     let mut stack = Vec::new();
     loop {
         for next_pos in next_pos(pos, &|p| !map.contains_key(p)) {
-            let (dir, undo) = to_dirs(next_pos, pos);
+            let dir = pos.compass(next_pos);
+            let undo = next_pos.compass(pos);
             stack.push(Action::Undo((undo, pos)));
             stack.push(Action::Do((dir, next_pos)));
         }
         if let Some(action) = stack.pop() {
             match action {
-                Action::Do((dir, next_pos)) => {
-                    joystick.send(from_dir(dir)).unwrap();
-                    let tile = to_tile(droid.recv().unwrap());
+                Action::Do((compass, next_pos)) => {
+                    joystick.send(compass_to_intcode(compass)).unwrap();
+                    let tile = intcode_to_tile(droid.recv().unwrap());
                     map.insert(next_pos, tile);
                     if tile == Tile::Wall {
                         stack.pop();
                     } else {
                         pos = next_pos;
                     }
-                },
-                Action::Undo((dir, prev_pos)) => {
-                    joystick.send(from_dir(dir)).unwrap();
-                    if to_tile(droid.recv().unwrap()) != Tile::Space {
+                }
+                Action::Undo((compass, prev_pos)) => {
+                    joystick.send(compass_to_intcode(compass)).unwrap();
+                    if intcode_to_tile(droid.recv().unwrap()) != Tile::Space {
                         panic!("Failed to undo move");
                     }
                     pos = prev_pos;
-                },
+                }
             }
         } else {
-            break map
+            break map;
         }
     }
 }
 
 fn fill_map_with_oxygen(map: &mut Map) -> (u32, u32) {
-    let start_pos = Vec2D { x: 0, y: 0 };
-    let &oxygen_pos = map.iter().filter(|(_, &v)| v == Tile::Oxygen).next().unwrap().0;
+    let start_pos = Vec2D::default();
+    let &oxygen_pos = map
+        .iter()
+        .filter(|(_, &v)| v == Tile::Oxygen)
+        .next()
+        .unwrap()
+        .0;
     let mut q = VecDeque::new();
     q.push_back((oxygen_pos, 0));
     let mut steps_to_start = 0;

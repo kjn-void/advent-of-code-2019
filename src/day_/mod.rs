@@ -1,8 +1,5 @@
 use super::Solution;
 
-// State required to solve day _
-pub struct State {}
-
 impl Solution for State {
     fn part1(&self) -> String {
         "".to_string()
@@ -12,6 +9,9 @@ impl Solution for State {
         "".to_string()
     }
 }
+
+// State required to solve day _
+pub struct State {}
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     Box::new(State {})

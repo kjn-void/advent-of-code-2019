@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 mod intcode;
+mod vec2d;
+
 mod day1;
 mod day2;
 mod day3;
@@ -18,6 +20,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
+mod day16;
 
 type Day = u32;
 
@@ -47,6 +50,7 @@ fn solution_get(day: Day, input: &mut dyn BufRead) -> Box<dyn Solution> {
         13 => day13::solution(lines),
         14 => day14::solution(lines),
         15 => day15::solution(lines),
+        16 => day16::solution(lines),
         _ => panic!("Invalid day specified"),
     }
 }
