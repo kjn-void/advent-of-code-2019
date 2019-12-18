@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::sync::mpsc::*;
 use super::intcode::*;
 use super::Solution;
@@ -91,6 +92,8 @@ impl Solution for State {
     }
 
     fn part2(&self) -> String {
+        let do_render = env::args().last().unwrap() == "-v";
+
         let mut free_play_program = self.program.clone();
         free_play_program[0] = 2;
         let (joystick, sink) = channel();
@@ -104,7 +107,9 @@ impl Solution for State {
                 Tile::Score(val) => final_score = val,
                 Tile::Paddle => {
                     paddle = tile.0;
-                    render(&screen);
+                    if do_render {
+                        render(&screen);
+                    }
                 }
                 Tile::Ball => {
                     let ball = tile.0;

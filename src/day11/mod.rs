@@ -31,8 +31,8 @@ fn paint_hull(program: &Vec<Intcode>, start_tile_col: Paint) -> HashMap<Vec2D, P
             break;
         };
         dir = match output.recv().unwrap() {
-            0 => dir.turn(Turn::Counterclockwise),
-            _ => dir.turn(Turn::Clockwise),
+            0 => dir.turn(Turn::Left),
+            _ => dir.turn(Turn::Right),
         };
         hull.insert(pos, color);
         pos += dir;

@@ -21,6 +21,7 @@ mod day13;
 mod day14;
 mod day15;
 mod day16;
+mod day17;
 
 type Day = u32;
 
@@ -51,6 +52,7 @@ fn solution_get(day: Day, input: &mut dyn BufRead) -> Box<dyn Solution> {
         14 => day14::solution(lines),
         15 => day15::solution(lines),
         16 => day16::solution(lines),
+        17 => day17::solution(lines),
         _ => panic!("Invalid day specified"),
     }
 }
@@ -61,7 +63,7 @@ fn main() {
         println!("Usage: {} DAY INPUT_FILE", args[0])
     } else {
         let day = args[1].parse::<Day>().unwrap();
-        let f = if args.len() == 2 {
+        let f = if args.len() == 2 || args[2] == "-v" {
             File::open(format!("src/day{}/input.txt", day))
         } else {
             File::open(&args[2])

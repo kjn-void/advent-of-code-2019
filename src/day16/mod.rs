@@ -128,13 +128,13 @@ mod tests {
     #[test]
     fn d15_ex3() {
         let mut signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
-        signal = phase(&signal);
+        signal = normal_phase(&signal);
         assert_eq!(signal, vec![4, 8, 2, 2, 6, 1, 5, 8]);
-        signal = phase(&signal);
+        signal = normal_phase(&signal);
         assert_eq!(signal, vec![3, 4, 0, 4, 0, 4, 3, 8]);
-        signal = phase(&signal);
+        signal = normal_phase(&signal);
         assert_eq!(signal, vec![0, 3, 4, 1, 5, 5, 1, 8]);
-        signal = phase(&signal);
+        signal = normal_phase(&signal);
         assert_eq!(signal, vec![0, 1, 0, 2, 9, 4, 9, 8]);
     }
 

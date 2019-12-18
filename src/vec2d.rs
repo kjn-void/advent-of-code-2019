@@ -1,9 +1,14 @@
 use std::ops::*;
 
-pub const NORTH: Vec2D = Vec2D{x: 0, y: 1};
-pub const SOUTH: Vec2D = Vec2D{x: 0, y: -1};
-pub const WEST: Vec2D = Vec2D{x: -1, y: 0};
-pub const EAST: Vec2D = Vec2D{x: 1, y: 0};
+pub const NORTH: Vec2D = Vec2D { x: 0, y: 1 };
+pub const SOUTH: Vec2D = Vec2D { x: 0, y: -1 };
+pub const WEST: Vec2D = Vec2D { x: -1, y: 0 };
+pub const EAST: Vec2D = Vec2D { x: 1, y: 0 };
+
+pub const UP: Vec2D = Vec2D { x: 0, y: 1 };
+pub const DOWN: Vec2D = Vec2D { x: 0, y: -1 };
+pub const LEFT: Vec2D = Vec2D { x: -1, y: 0 };
+pub const RIGHT: Vec2D = Vec2D { x: 1, y: 0 };
 
 pub type Coord = i32;
 pub type Distance = u32;
@@ -30,10 +35,30 @@ pub enum Compass {
     East,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Turn {
-    Clockwise,
-    Counterclockwise,
+    Right,
+    Left,
+}
+
+impl Dir {
+    pub fn turn(&self, turn: Turn) -> Dir {
+        if turn == Turn::Right {
+            match *self {
+                Dir::Up => Dir::Right,
+                Dir::Down => Dir::Left,
+                Dir::Left => Dir::Up,
+                Dir::Right => Dir::Down,
+            }
+        } else {
+            match *self {
+                Dir::Up => Dir::Left,
+                Dir::Down => Dir::Right,
+                Dir::Left => Dir::Down,
+                Dir::Right => Dir::Up,
+            }
+        }
+    }
 }
 
 impl Vec2D {
@@ -46,30 +71,30 @@ impl Vec2D {
     }
 
     pub fn from(x: i32, y: i32) -> Vec2D {
-        Vec2D{x: x, y: y}
+        Vec2D { x: x, y: y }
     }
 
     pub fn compass(self: Vec2D, other: Vec2D) -> Compass {
         match other - self {
-            Vec2D{x: 0, y: 1} => Compass::North,
-            Vec2D{x: 0, y: -1} => Compass::South,
-            Vec2D{x: -1, y: 0} => Compass::West,
-            Vec2D{x: 1, y: 0} => Compass::East,
-            _ => panic!("Does not result in an unit vector")
+            Vec2D { x: 0, y: 1 } => Compass::North,
+            Vec2D { x: 0, y: -1 } => Compass::South,
+            Vec2D { x: -1, y: 0 } => Compass::West,
+            Vec2D { x: 1, y: 0 } => Compass::East,
+            _ => panic!("Does not result in an unit vector"),
         }
     }
 
     pub fn from_dir(dir: Dir) -> Vec2D {
         match dir {
-            Dir::Up => Vec2D::from(0, 1),
-            Dir::Down => Vec2D::from(0, -1),
+            Dir::Up => Vec2D::from(0, -1),
+            Dir::Down => Vec2D::from(0, 1),
             Dir::Left => Vec2D::from(-1, 0),
             Dir::Right => Vec2D::from(1, 0),
         }
     }
 
     pub fn turn(self: Vec2D, turn: Turn) -> Vec2D {
-        if turn == Turn::Clockwise {
+        if turn == Turn::Right {
             Vec2D::from(self.y, -self.x)
         } else {
             Vec2D::from(-self.y, self.x)
@@ -89,7 +114,7 @@ impl Vec2D {
         }
         path
     }
-} 
+}
 
 impl Default for Vec2D {
     fn default() -> Vec2D {
@@ -101,7 +126,10 @@ impl Add for Vec2D {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Vec2D{ x: self.x + other.x, y: self.y + other.y }
+        Vec2D {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
     }
 }
 
@@ -116,6 +144,9 @@ impl Sub for Vec2D {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        Vec2D{ x: self.x - other.x, y: self.y - other.y }
+        Vec2D {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
     }
 }
