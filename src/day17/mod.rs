@@ -1,50 +1,11 @@
 use super::intcode::*;
 use super::vec2d::*;
 use super::Solution;
+use regex::Regex;
 use std::char;
 use std::collections::HashMap;
-use std::collections::HashSet;
+use std::env;
 use std::sync::mpsc::*;
-
-fn render(map: &Map) {
-    let mut pos = Vec2D::default();
-    loop {
-        let tile = map.get(&pos);
-        if tile == None {
-            println!("");
-            if pos.x() == 0 {
-                break;
-            }
-            pos = Vec2D::from(0, pos.y() + 1);
-        } else if let Some(tile) = tile {
-            print!(
-                "{}",
-                match tile {
-                    Tile::Space => " ",
-                    Tile::Scaffold => {
-                        if is_intersection(&map, pos) {
-                            "O"
-                        } else {
-                            "#"
-                        }
-                    }
-                    Tile::Robot(d) => {
-                        if d == &Dir::Left {
-                            "<"
-                        } else if d == &Dir::Right {
-                            ">"
-                        } else if d == &Dir::Up {
-                            "^"
-                        } else {
-                            "v"
-                        }
-                    }
-                }
-            );
-            pos += RIGHT;
-        }
-    }
-}
 
 type Map = HashMap<Vec2D, Tile>;
 type Movement = (Turn, Distance);
@@ -90,14 +51,13 @@ fn is_intersection(map: &Map, pos: Vec2D) -> bool {
         })
 }
 
-fn turn_next(pos: Vec2D, dir: Dir, map: &Map, visited: &HashSet<Vec2D>) -> Option<Turn> {
+fn next_turn(pos: Vec2D, dir: Dir, map: &Map) -> Option<Turn> {
     let turns = [Turn::Left, Turn::Right];
     if let Some(&turn) = turns
         .iter()
         .filter(|&&to| {
             let new_pos = pos + Vec2D::from_dir(dir.turn(to));
-            !visited.contains(&new_pos)
-                && map.get(&new_pos).unwrap_or(&Tile::Space) == &Tile::Scaffold
+            map.get(&new_pos).unwrap_or(&Tile::Space) == &Tile::Scaffold
         })
         .last()
     {
@@ -108,7 +68,6 @@ fn turn_next(pos: Vec2D, dir: Dir, map: &Map, visited: &HashSet<Vec2D>) -> Optio
 
 fn path_get(map: &Map) -> Vec<Movement> {
     let mut moves = Vec::new();
-    let mut visited = HashSet::new();
     let (start_pos, start_dir) = map
         .iter()
         .filter(|(_, tile)| {
@@ -126,7 +85,7 @@ fn path_get(map: &Map) -> Vec<Movement> {
     } else {
         panic!("BUG!")
     };
-    while let Some(to) = turn_next(pos, dir, map, &visited) {
+    while let Some(to) = next_turn(pos, dir, map) {
         dir = dir.turn(to);
         let mut steps = 0;
         loop {
@@ -136,11 +95,68 @@ fn path_get(map: &Map) -> Vec<Movement> {
             }
             pos = new_pos;
             steps += 1;
-            visited.insert(pos);
         }
         moves.push((to, steps));
     }
     moves
+}
+
+fn path_to_string(path: Vec<Movement>) -> String {
+    path.into_iter().fold("".to_string(), |acc, (turn, steps)| {
+        acc + turn.to_str() + "," + &steps.to_string() + ","
+    })
+}
+
+fn remove_n(path: &String, n: usize) -> (String, String) {
+    let sub_prog = path.split(",").take(n * 2).collect::<Vec<_>>().join(",");
+    let re = Regex::new(&(sub_prog.clone() + ",")).unwrap();
+    (sub_prog.clone(), re.replace_all(path, "").to_string())
+}
+
+fn compile_with(path: &String, a: &String, b: &String, c: &String) -> Option<String> {
+    let mut prog = "".to_string();
+    let mut p = path.clone();
+    let re = [a, b, c]
+        .iter()
+        .map(|&sub_prog| Regex::new(&format!("^{},", sub_prog)).unwrap())
+        .collect::<Vec<_>>();
+    while p.len() > 0 {
+        if let Some((re, &sub_prog)) = re
+            .iter()
+            .zip(&["A", "B", "C"])
+            .filter(|(re, _)| re.find(&p) != None)
+            .next()
+        {
+            p = re.replace(&p, "").to_string();
+            prog += sub_prog;
+            prog += ",";
+        } else {
+            return None;
+        }
+    }
+    Some(prog)
+}
+
+fn compile(path: String) -> (String, String, String, String) {
+    for a in 1..=10 {
+        let (a_prog, rem_path) = remove_n(&path, a);
+        for b in 1..=10 {
+            let (b_prog, rem_path) = remove_n(&rem_path, b);
+            for c in 1..=10 {
+                let (c_prog, rem_path) = remove_n(&rem_path, c);
+                if rem_path.len() == 0 {
+                    if let Some(mut main_rtn) = compile_with(&path, &a_prog, &b_prog, &c_prog) {
+                        main_rtn.pop();
+                        main_rtn.push('\n');
+                        if main_rtn.len() <= 20 {
+                            return (main_rtn, a_prog + "\n", b_prog + "\n", c_prog + "\n");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    panic!("No solution found");
 }
 
 impl Solution for State {
@@ -154,10 +170,32 @@ impl Solution for State {
     }
 
     fn part2(&self) -> String {
+        let verbose = env::args().last().unwrap() == "-v";
         let map = map_get(&self.program);
-        let path = path_get(&map);
-        render(&map);
-        path.into_iter().fold("".to_string(), |acc, (turn, steps)| acc + if turn == Turn::Left { "L" } else { "R" } + "," + &steps.to_string() + ",")   
+        if verbose {
+            render(&map);
+        }
+        let (input, sink) = channel();
+        let mut program = self.program.clone();
+        program[0] = 2;
+        let output = exec(&program, sink, None);
+
+        let path = path_to_string(path_get(&map));
+        let (main_rtn, a, b, c) = compile(path);
+        for ch in main_rtn.chars().chain(
+            a.chars()
+                .chain(b.chars().chain(c.chars().chain("n\n".chars()))),
+        ) {
+            if verbose {
+                print!("{}", ch);
+            }
+            input.send(ch as i64).unwrap();
+        }
+        let mut dust = 0;
+        while let Ok(ch) = output.recv() {
+            dust = ch;
+        }
+        dust.to_string()
     }
 }
 
@@ -175,6 +213,36 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     })
 }
 
+fn render(map: &Map) {
+    let mut pos = Vec2D::default();
+    loop {
+        let tile = map.get(&pos);
+        if tile == None {
+            println!();
+            if pos.x() == 0 {
+                break;
+            }
+            pos = Vec2D::from(0, pos.y() + 1);
+        } else if let Some(tile) = tile {
+            print!(
+                "{}",
+                match tile {
+                    Tile::Space => " ",
+                    Tile::Scaffold => {
+                        if is_intersection(&map, pos) {
+                            "O"
+                        } else {
+                            "#"
+                        }
+                    }
+                    Tile::Robot(d) => d.to_str(),
+                }
+            );
+            pos += RIGHT;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,7 +256,6 @@ mod tests {
 
     #[test]
     fn d17_part2() {
-        //assert_eq!(solution(vec![INPUT]).part2(), "5788");
+        assert_eq!(solution(vec![INPUT]).part2(), "648545");
     }
-
 }

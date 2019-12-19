@@ -5,8 +5,8 @@ pub const SOUTH: Vec2D = Vec2D { x: 0, y: -1 };
 pub const WEST: Vec2D = Vec2D { x: -1, y: 0 };
 pub const EAST: Vec2D = Vec2D { x: 1, y: 0 };
 
-pub const UP: Vec2D = Vec2D { x: 0, y: 1 };
-pub const DOWN: Vec2D = Vec2D { x: 0, y: -1 };
+pub const UP: Vec2D = Vec2D { x: 0, y: -1 };
+pub const DOWN: Vec2D = Vec2D { x: 0, y: 1 };
 pub const LEFT: Vec2D = Vec2D { x: -1, y: 0 };
 pub const RIGHT: Vec2D = Vec2D { x: 1, y: 0 };
 
@@ -41,7 +41,22 @@ pub enum Turn {
     Left,
 }
 
+impl Turn {
+    pub fn to_str(&self) -> &'static str {
+        if *self == Turn::Right { "R" } else { "L" }
+    }
+}
+
 impl Dir {
+    pub fn to_str(&self) -> &'static str {
+        match *self {
+            Dir::Down => "v",
+            Dir::Up => "^",
+            Dir::Left => "<",
+            Dir::Right => ">",
+        }
+    }
+
     pub fn turn(&self, turn: Turn) -> Dir {
         if turn == Turn::Right {
             match *self {
@@ -86,10 +101,10 @@ impl Vec2D {
 
     pub fn from_dir(dir: Dir) -> Vec2D {
         match dir {
-            Dir::Up => Vec2D::from(0, -1),
-            Dir::Down => Vec2D::from(0, 1),
-            Dir::Left => Vec2D::from(-1, 0),
-            Dir::Right => Vec2D::from(1, 0),
+            Dir::Up => UP,
+            Dir::Down => DOWN,
+            Dir::Left => LEFT,
+            Dir::Right => RIGHT,
         }
     }
 

@@ -62,9 +62,9 @@ impl Solution for State {
         let hull = paint_hull(&self.program, Paint::White);
         let (tl, br) = bound_box(&hull);
         let mut plate = Vec::new();
-        for y in (tl.y()..=br.y()).rev() {
+        for y in tl.y()..=br.y() {
             plate.push('\n');
-            for x in tl.x()..=br.x() {
+            for x in (tl.x()..=br.x()).rev() {
                 let pos = Vec2D::from(x, y);
                 let ch = if let Some(&col) = hull.get(&pos) {
                     if col == Paint::Black {
