@@ -223,9 +223,9 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     }
     Box::new(State {
         start_pos: start_pos.unwrap(),
-        walls: walls,
-        keys: keys,
-        doors: doors,
+        walls,
+        keys,
+        doors,
     })
 }
 

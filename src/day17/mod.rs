@@ -162,6 +162,9 @@ fn compile(path: String) -> (String, String, String, String) {
 impl Solution for State {
     fn part1(&self) -> String {
         let map = map_get(&self.program);
+        if self.verbose {
+            render(&map);
+        }
         map.keys()
             .filter(|&&pos| is_intersection(&map, pos))
             .map(|pos| pos.x() * pos.y())
@@ -170,11 +173,7 @@ impl Solution for State {
     }
 
     fn part2(&self) -> String {
-        let verbose = env::args().last().unwrap() == "-v";
         let map = map_get(&self.program);
-        if verbose {
-            render(&map);
-        }
         let (input, sink) = channel();
         let mut program = self.program.clone();
         program[0] = 2;
@@ -186,7 +185,7 @@ impl Solution for State {
             a.chars()
                 .chain(b.chars().chain(c.chars().chain("n\n".chars()))),
         ) {
-            if verbose {
+            if self.verbose {
                 print!("{}", ch);
             }
             input.send(ch as i64).unwrap();
@@ -202,6 +201,7 @@ impl Solution for State {
 // State required to solve day 17
 pub struct State {
     program: Vec<Intcode>,
+    verbose: bool,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
@@ -210,6 +210,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())
             .collect(),
+        verbose: env::args().last().unwrap() == "-v",
     })
 }
 

@@ -20,7 +20,9 @@ fn bfs(
         dirs.iter()
             .map(|&dir| start_pos + dir)
             .filter(|new_pos| passage.get(&new_pos) != None)
-            .inspect(|&new_pos| { visited.insert((new_pos, 0), 0); })
+            .inspect(|&new_pos| {
+                visited.insert((new_pos, 0), 0);
+            })
             .map(|new_pos| (new_pos, 0, 0)),
     );
 
@@ -165,8 +167,8 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     Box::new(State {
         start_pos: start_pos.unwrap(),
         end_pos: end_pos.unwrap(),
-        passage: passage,
-        teleports: teleports,
+        passage,
+        teleports,
     })
 }
 
