@@ -9,10 +9,14 @@ type Area = u32;
 type RecursiveArea = Vec<Area>;
 
 fn bug_at(state: Area, x: isize, y: isize) -> u32 {
-    if x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT || state & (1 << (x + y * WIDTH)) == 0 {
+    if state & (1 << (x + y * WIDTH)) == 0 { 0 } else { 1 }
+}
+
+fn safe_bug_at(state: Area, x: isize, y: isize) -> u32 {
+    if x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT  {
         0
     } else {
-        1
+        bug_at(state, x, y)
     }
 }
 
@@ -20,7 +24,7 @@ fn next_state(state: Area) -> Area {
     let cnt_neigh = |x, y| {
         [(-1, 0), (1, 0), (0, -1), (0, 1)]
             .iter()
-            .map(|(dx, dy)| bug_at(state, x + dx, y + dy))
+            .map(|(dx, dy)| safe_bug_at(state, x + dx, y + dy))
             .sum()
     };
     let mut new_state = 0;
@@ -55,8 +59,8 @@ fn next_level_state(lvls: &[Area; 3]) -> Area {
                 (4, ym) => vec![(1, 3, ym), (1, 4, ym - 1), (0, 3, 2), (1, 4, ym + 1)],
                 (xm, ym) => vec![(1, xm - 1, ym), (1, xm, ym - 1), (1, xm + 1, ym), (1, xm, ym + 1)],
             }
-            .into_iter()
-            .map(|(lvl, x, y)| bug_at(lvls[lvl], x, y))
+            .iter()
+            .map(|&(lvl, x, y)| bug_at(lvls[lvl], x, y))
             .sum();
             if num_neigh == 1 || (bug_at(lvls[1], x, y) == 0 && num_neigh == 2) {
                 new_state |= 1 << (x + y * WIDTH);
@@ -69,23 +73,23 @@ fn next_level_state(lvls: &[Area; 3]) -> Area {
 fn next_recursive_state(state: RecursiveArea) -> RecursiveArea {
     let state_get = |level, dl: isize| {
         let eff_lvl = level as isize + dl;
-        if eff_lvl < 0 {
-            return 0;
-        }
-        let eff_lvl = eff_lvl as usize;
-        if eff_lvl >= state.len() {
+        if eff_lvl < 0 || eff_lvl >= state.len() as isize {
             0
         } else {
-            state[eff_lvl]
+            state[eff_lvl as usize]
         }
     };
     let mut new_state = Vec::new();
-    for level in 0..(state.len() + 2) {
-        new_state.push(next_level_state(&[
+    let new_len = state.len() + 1;
+    for level in 0..=new_len {
+        let lvl_state = next_level_state(&[
             state_get(level, -2),
             state_get(level, -1),
             state_get(level, 0),
-        ]));
+        ]);
+        if lvl_state != 0 || level != 0 && level != new_len {
+            new_state.push(lvl_state);
+        }
     }
     new_state
 }
@@ -156,13 +160,27 @@ mod tests {
 
     #[test]
     fn d24_ex2() {
+        let input = vec!["....#", "#..#.", "#..##", "..#..", "#...."];
+        assert_eq!(solution(input).part1(), "2129920");
+    }
+
+    #[test]
+    fn d24_ex3() {
         let init_state = to_state(&vec!["....#", "#..#.", "#..##", "..#..", "#...."]);
         assert_eq!(live_bugs_after(10, init_state), 99);
     }
 
     #[test]
     fn d24_part1() {
-        let input = vec!["....#", "#..#.", "#..##", "..#..", "#...."];
-        assert_eq!(solution(input).part1(), "2129920");
+        let input = vec!["####.", ".###.", ".#..#", "##.##", "###.."];
+        assert_eq!(solution(input).part1(), "32511025");
     }
+
+
+    #[test]
+    fn d24_part2() {
+        let input = vec!["####.", ".###.", ".#..#", "##.##", "###.."];
+        assert_eq!(solution(input).part2(), "1932");
+    }
+
 }
