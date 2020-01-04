@@ -69,7 +69,7 @@ fn make_scripts(script_id: ScriptId, base_sreg: &Vec<Src>) -> Vec<Script> {
     let mut scts = Vec::new();
 
     // Generate all combinations where the generated instruction is or isn't
-    // by a "NOT J J".
+    // followed by "NOT J J".
     for i in 0..(2u32.pow(base_script.len() as u32)) {
         let mut script = Vec::new();
         for (j, &instr) in base_script.iter().enumerate() {
@@ -184,7 +184,7 @@ fn get_hull_damage(program: &Vec<Intcode>, extended_range: bool, verbose: bool) 
                 }
                 while let Ok(_) = output.recv() {}
                 scenarios.push(!new_scenario);
-                } else {
+            } else {
                 break;
             }
         }

@@ -5,7 +5,7 @@ use regex::Regex;
 use std::char;
 use std::collections::HashMap;
 use std::env;
-use std::sync::mpsc::*;
+use std::sync::mpsc::channel;
 
 type Map = HashMap<Vec2D, Tile>;
 type Movement = (Turn, Distance);
