@@ -27,13 +27,15 @@ pub enum Dir {
     Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash)]
 pub enum Compass {
     North,
     South,
     West,
     East,
 }
+
+impl Eq for Compass { }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Turn {
@@ -44,6 +46,17 @@ pub enum Turn {
 impl Turn {
     pub fn to_str(&self) -> &'static str {
         if *self == Turn::Right { "R" } else { "L" }
+    }
+}
+
+impl Compass {
+    pub fn mirror(&self) -> Compass {
+        match *self {
+            Compass::East => Compass::West,
+            Compass::North => Compass::South,
+            Compass::South => Compass::North,
+            Compass::West => Compass::East,
+        }
     }
 }
 
@@ -89,6 +102,15 @@ impl Vec2D {
         Vec2D { x: x, y: y }
     }
 
+    pub fn from_dir(dir: Dir) -> Vec2D {
+        match dir {
+            Dir::Up => UP,
+            Dir::Down => DOWN,
+            Dir::Left => LEFT,
+            Dir::Right => RIGHT,
+        }
+    }
+
     pub fn compass(self: Vec2D, other: Vec2D) -> Compass {
         match other - self {
             Vec2D { x: 0, y: 1 } => Compass::North,
@@ -96,15 +118,6 @@ impl Vec2D {
             Vec2D { x: -1, y: 0 } => Compass::West,
             Vec2D { x: 1, y: 0 } => Compass::East,
             _ => panic!("Does not result in an unit vector"),
-        }
-    }
-
-    pub fn from_dir(dir: Dir) -> Vec2D {
-        match dir {
-            Dir::Up => UP,
-            Dir::Down => DOWN,
-            Dir::Left => LEFT,
-            Dir::Right => RIGHT,
         }
     }
 
