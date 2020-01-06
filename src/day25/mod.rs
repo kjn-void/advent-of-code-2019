@@ -28,8 +28,7 @@ fn room_info_lines(output: &Receiver<Intcode>, verbose: bool) -> Vec<String> {
     let mut desc_buf = Vec::new();
     while let Ok(ch) = output.recv() {
         desc_buf.push((ch as u8) as char);
-        if desc_buf.last().unwrap() == &'?'
-            && desc_buf.iter().collect::<String>().ends_with("Command?")
+        if desc_buf.iter().collect::<String>().ends_with("Command?")
         {
             break;
         }
@@ -96,34 +95,28 @@ fn room_info(output: &Receiver<Intcode>, verbose: bool) -> (Room, Exits, Option<
     (name_get(&lines), exits_get(&lines), item_get(&lines))
 }
 
+fn issue_cmd(cmd: String, input: &Sender<Intcode>, verbose: bool) {
+    for ch in cmd.chars() {
+        input.send(ch as Intcode).unwrap();
+        if verbose {
+            print!("{}", ch);
+        }
+    }
+}
+
 impl Robot {
     fn item_pick(&mut self, item: &Item) {
+        issue_cmd("take ".to_string() + item + "\n", &self.input, self.verbose);
         self.carrying |= 1 << self.seen.len();
         self.seen.push(item.clone());
-        for ch in ("take ".to_string() + item + "\n").chars() {
-            self.input.send(ch as Intcode).unwrap();
-            if self.verbose {
-                print!("{}", ch);
-            }
-        }
     }
 
     fn item_drop(&mut self, item: &Item) {
-        self.carrying &= !(1 << self.seen.len());
-        for ch in ("drop ".to_string() + item + "\n").chars() {
-            self.input.send(ch as Intcode).unwrap();
-            if self.verbose {
-                print!("{}", ch);
-            }
-        }
+        issue_cmd("drop ".to_string() + item + "\n", &self.input, self.verbose);
     }
+
     fn move_to(&mut self, compass: Compass, new_area: bool) {
-        for ch in format!("{:?}\n", compass).to_lowercase().chars() {
-            self.input.send(ch as Intcode).unwrap();
-            if self.verbose {
-                print!("{}", ch);
-            }
-        }
+        issue_cmd(format!("{:?}\n", compass).to_lowercase(), &self.input, self.verbose);
         self.last_move = compass;
         if !self.checkpoint_found {
             if new_area {
@@ -236,7 +229,7 @@ impl Solution for State {
     }
 }
 
-// State required to solve day _
+// State required to solve day 25
 pub struct State {
     program: Vec<Intcode>,
     verbose: bool,
