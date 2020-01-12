@@ -16,7 +16,7 @@ type ItemBag = u32;
 struct Robot {
     carrying: ItemBag,
     seen: Items,
-    last_move: Compass,
+    last_move: Option<Compass>,
     checkpoint_found: bool,
     path_to_checkpoint: Vec<Compass>,
     input: Sender<Intcode>,
@@ -117,7 +117,7 @@ impl Robot {
 
     fn move_to(&mut self, compass: Compass, new_area: bool) {
         issue_cmd(format!("{:?}\n", compass).to_lowercase(), &self.input, self.verbose);
-        self.last_move = compass;
+        self.last_move = Some(compass);
         if !self.checkpoint_found {
             if new_area {
                 self.path_to_checkpoint.push(compass);
@@ -145,7 +145,9 @@ fn gather_items(robot: &mut Robot) {
     loop {
         let (name, exits, item) = room_info(&robot.output, robot.verbose);
         if exits.len() > 0 {
-            visited.insert((name.clone(), robot.last_move.mirror()));
+            if let Some(last_move) = robot.last_move {
+                visited.insert((name.clone(), last_move.mirror()));
+            }
         }
         if name == "Security Checkpoint" {
             robot.checkpoint_found = true;
@@ -196,7 +198,7 @@ fn password_get(robot: &mut Robot) -> String {
             }
         }
         robot.carrying = items;
-        robot.move_to(robot.last_move, false);
+        robot.move_to(robot.last_move.unwrap(), false);
         let resp = room_info_lines(&robot.output, robot.verbose).join("\n");
         if resp.find("Alert!") == None {
             return resp.chars().filter(|c| c.is_numeric()).collect();
@@ -211,7 +213,7 @@ impl Solution for State {
         let output = exec(&self.program, sink, None);
         let mut robot = Robot {
             carrying: 0,
-            last_move: Compass::East,
+            last_move: None,
             seen: Items::new(),
             checkpoint_found: false,
             path_to_checkpoint: Vec::new(),
