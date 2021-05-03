@@ -12,7 +12,7 @@ enum Instruction {
 }
 
 // State required to solve day 2
-pub struct State {
+pub struct Day2 {
     memory: Vec<Intcode>,
 }
 
@@ -54,7 +54,7 @@ fn run(memory: &Vec<Intcode>, noun: Intcode, verb: Intcode) -> Intcode {
     mem[0]
 }
 
-impl Solution for State {
+impl Solution for Day2 {
     fn part1(&self) -> String {
         run(&self.memory, 12, 2).to_string()
     }
@@ -78,7 +78,7 @@ impl Solution for State {
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day2 {
         memory: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

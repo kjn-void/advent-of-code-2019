@@ -154,7 +154,7 @@ fn collect_keys(start_pos: Vec2D, walls: &Walls, keys: &Map, doors: &Map) -> Dis
     min_steps
 }
 
-impl Solution for State {
+impl Solution for Day18 {
     fn part1(&self) -> String {
         collect_keys(self.start_pos, &self.walls, &self.keys, &self.doors).to_string()
     }
@@ -194,7 +194,7 @@ impl Solution for State {
 }
 
 // State required to solve day 18
-pub struct State {
+pub struct Day18 {
     start_pos: Vec2D,
     walls: Walls,
     keys: Map,
@@ -221,7 +221,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
             }
         }
     }
-    Box::new(State {
+    Box::new(Day18 {
         start_pos: start_pos.unwrap(),
         walls,
         keys,

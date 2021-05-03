@@ -48,7 +48,7 @@ fn ore_per_n_fuel(n: Count, syntheses: &Syntheses) -> Count {
     get_chemical(&fuel, syntheses, &mut inventory)
 }
 
-impl Solution for State {
+impl Solution for Day14 {
     fn part1(&self) -> String {
         ore_per_n_fuel(1, &self.syntheses).to_string()
     }
@@ -76,7 +76,7 @@ impl Solution for State {
 }
 
 // State required to solve day 14
-pub struct State {
+pub struct Day14 {
     syntheses: Syntheses,
 }
 
@@ -97,7 +97,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
         }
         syntheses.insert(chemicals.last().unwrap().name.clone(), chemicals);
     }
-    Box::new(State {
+    Box::new(Day14 {
         syntheses: syntheses,
     })
 }

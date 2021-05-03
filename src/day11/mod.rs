@@ -53,7 +53,7 @@ fn bound_box(hull: &HashMap<Vec2D, Paint>) -> (Vec2D, Vec2D) {
     (Vec2D::from(left, top), Vec2D::from(right, bottom))
 }
 
-impl Solution for State {
+impl Solution for Day11 {
     fn part1(&self) -> String {
         paint_hull(&self.program, Paint::Black).len().to_string()
     }
@@ -83,12 +83,12 @@ impl Solution for State {
 }
 
 // State required to solve day 11
-pub struct State {
+pub struct Day11 {
     program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day11 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

@@ -104,7 +104,7 @@ fn live_bugs_after(seconds: u32, initial_state: Area) -> u32 {
     .sum()
 }
 
-impl Solution for State {
+impl Solution for Day24 {
     fn part1(&self) -> String {
         let mut seen_states = HashSet::new();
         let mut state = self.initial_state;
@@ -121,7 +121,7 @@ impl Solution for State {
 }
 
 // State required to solve day _
-pub struct State {
+pub struct Day24 {
     initial_state: Area,
 }
 
@@ -142,7 +142,7 @@ fn to_state(lines: &Vec<&str>) -> Area {
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day24 {
         initial_state: to_state(&lines),
     })
 }

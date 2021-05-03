@@ -78,11 +78,11 @@ fn step_time(moons: &PlanetSystem) -> PlanetSystem {
 }
 
 // State required to solve day 12
-pub struct State {
+pub struct Day12 {
     moons: PlanetSystem,
 }
 
-impl Solution for State {
+impl Solution for Day12 {
     fn part1(&self) -> String {
         energy(&(0..1000).fold(self.moons.clone(), |cur_moons, _| step_time(&cur_moons)))
             .to_string()
@@ -130,7 +130,7 @@ fn parse_input(lines: Vec<&str>) -> PlanetSystem {
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day12 {
         moons: parse_input(lines),
     })
 }

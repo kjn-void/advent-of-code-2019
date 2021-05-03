@@ -2,7 +2,7 @@ use super::intcode::*;
 use super::Solution;
 use std::sync::mpsc::*;
 
-impl Solution for State {
+impl Solution for Day9 {
     fn part1(&self) -> String {
         let (input, sink) = channel();
         let output = exec(&self.program, sink, None);
@@ -19,12 +19,12 @@ impl Solution for State {
 }
 
 // State required to solve day 9
-pub struct State {
+pub struct Day9 {
     program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day9 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

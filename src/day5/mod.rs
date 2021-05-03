@@ -3,11 +3,11 @@ use super::Solution;
 use std::sync::mpsc::*;
 
 // State required to solve day 5
-pub struct State {
+pub struct Day5 {
     memory: Vec<Intcode>,
 }
 
-impl Solution for State {
+impl Solution for Day5 {
     fn part1(&self) -> String {
         let (input, sink) = channel();
         let output = exec(&self.memory, sink, None);
@@ -28,7 +28,7 @@ impl Solution for State {
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day5 {
         memory: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

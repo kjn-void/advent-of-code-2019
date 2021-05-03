@@ -35,7 +35,7 @@ fn exec_with_phases(program: &Vec<Intcode>, phases: &mut [Intcode; NUM_AMPS]) ->
     thrusters_signal.into_iter().max().unwrap()
 }
 
-impl Solution for State {
+impl Solution for Day7 {
     fn part1(&self) -> String {
         exec_with_phases(&self.memory, &mut [0, 1, 2, 3, 4]).to_string()
     }
@@ -46,12 +46,12 @@ impl Solution for State {
 }
 
 // State required to solve day 7
-pub struct State {
+pub struct Day7 {
     memory: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day7 {
         memory: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

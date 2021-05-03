@@ -4,7 +4,7 @@ type Mass = i32;
 type Fuel = i32;
 
 // State required to solve day 1
-pub struct State {
+pub struct Day1 {
     modules: Vec<Mass>,
 }
 
@@ -24,7 +24,7 @@ fn fuel_with_mass_required(mass: &Mass) -> Fuel {
     }
 }
 
-impl Solution for State {
+impl Solution for Day1 {
     fn part1(&self) -> String {
         let fuel: Fuel = self.modules.iter().map(fuel_required).sum();
         fuel.to_string()
@@ -37,7 +37,7 @@ impl Solution for State {
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day1 {
         modules: lines
             .iter()
             .map(|line| line.parse::<Mass>().unwrap())

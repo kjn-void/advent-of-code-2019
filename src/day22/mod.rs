@@ -47,7 +47,7 @@ fn apply_techniques(techniques: &Vec<Technique>, deck: &Deck) -> Deck {
         })
 }
 
-impl Solution for State {
+impl Solution for Day22 {
     fn part1(&self) -> String {
         let deck = apply_techniques(&self.techniques, &(0..10007).collect());
         deck.iter().enumerate().filter(|(_, &val)| val==2019).next().unwrap().0.to_string()
@@ -59,7 +59,7 @@ impl Solution for State {
 }
 
 // State required to solve day 22
-pub struct State {
+pub struct Day22 {
     techniques: Vec<Technique>,
 }
 
@@ -81,7 +81,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
             techniques.push(Technique::Cut(n.parse::<isize>().unwrap()));
         }
     }
-    Box::new(State { techniques })
+    Box::new(Day22 { techniques })
 }
 
 #[cfg(test)]

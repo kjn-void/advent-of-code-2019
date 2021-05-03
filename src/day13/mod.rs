@@ -78,7 +78,7 @@ fn render(screen: &Screen) {
     std::thread::sleep(std::time::Duration::from_millis(50));
 }
 
-impl Solution for State {
+impl Solution for Day13 {
     fn part1(&self) -> String {
         let (_, sink) = channel();
         let output = exec(&self.program, sink, None);
@@ -131,12 +131,12 @@ impl Solution for State {
 }
 
 // State required to solve day 13
-pub struct State {
+pub struct Day13 {
     program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day13 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

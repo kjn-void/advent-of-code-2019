@@ -14,7 +14,7 @@ fn centers(orbiting: &HashMap<String, String>, outermost: &String) -> Vec<String
     cntrs
 }
 
-impl Solution for State {
+impl Solution for Day6 {
     fn part1(&self) -> String {
         let total_orbits: u32 = self
             .orbiting
@@ -34,12 +34,12 @@ impl Solution for State {
 }
 
 // State required to solve day 6
-pub struct State {
+pub struct Day6 {
     orbiting: HashMap<String, String>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day6 {
         orbiting: lines
             .iter()
             .map(|line| {

@@ -192,7 +192,7 @@ fn get_hull_damage(program: &Vec<Intcode>, extended_range: bool, verbose: bool) 
     }
 }
 
-impl Solution for State {
+impl Solution for Day21 {
     fn part1(&self) -> String {
         get_hull_damage(&self.program, false, self.verbose).to_string()
     }
@@ -203,13 +203,13 @@ impl Solution for State {
 }
 
 // State required to solve day 21
-pub struct State {
+pub struct Day21 {
     program: Vec<Intcode>,
     verbose: bool,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day21 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

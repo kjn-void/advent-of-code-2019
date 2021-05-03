@@ -207,7 +207,7 @@ fn password_get(robot: &mut Robot) -> String {
     panic!("Did not find the password!");
 }
 
-impl Solution for State {
+impl Solution for Day25 {
     fn part1(&self) -> String {
         let (input, sink) = channel();
         let output = exec(&self.program, sink, None);
@@ -232,13 +232,13 @@ impl Solution for State {
 }
 
 // State required to solve day 25
-pub struct State {
+pub struct Day25 {
     program: Vec<Intcode>,
     verbose: bool,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day25 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

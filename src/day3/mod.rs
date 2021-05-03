@@ -34,7 +34,7 @@ fn line_trace(line: &Vec<Movement>) -> HashMap<Vec2D, Distance> {
     trace
 }
 
-impl Solution for State {
+impl Solution for Day3 {
     fn part1(&self) -> String {
         let trace = line_trace(&self.line_a);
         let mut p = Vec2D::default();
@@ -67,13 +67,13 @@ impl Solution for State {
 }
 
 // State required to solve day 3
-pub struct State {
+pub struct Day3 {
     line_a: Vec<Movement>,
     line_b: Vec<Movement>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    let mut sln = State {
+    let mut sln = Day3 {
         line_a: Vec::new(),
         line_b: Vec::new(),
     };

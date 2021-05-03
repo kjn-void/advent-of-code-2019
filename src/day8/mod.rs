@@ -32,7 +32,7 @@ fn count_pixels(layer: &String, pixel: char) -> usize {
     layer.chars().filter(|&pxl| pxl == pixel).count()
 }
 
-impl Solution for State {
+impl Solution for Day8 {
     fn part1(&self) -> String {
         let zeros: Vec<usize> = self
             .layers
@@ -51,7 +51,7 @@ impl Solution for State {
 }
 
 // State required to solve day 8
-pub struct State {
+pub struct Day8 {
     layers: Vec<String>,
 }
 
@@ -60,7 +60,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     for layer in &lines[0].chars().chunks(WIDTH * HEIGHT) {
         layers.push(layer.collect());
     }
-    Box::new(State { layers: layers })
+    Box::new(Day8 { layers: layers })
 }
 
 #[cfg(test)]

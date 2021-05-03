@@ -51,7 +51,7 @@ fn bfs(
     panic!("No solution");
 }
 
-impl Solution for State {
+impl Solution for Day20 {
     fn part1(&self) -> String {
         bfs(
             self.start_pos,
@@ -76,7 +76,7 @@ impl Solution for State {
 }
 
 // State required to solve day 20
-pub struct State {
+pub struct Day20 {
     start_pos: Vec2D,
     end_pos: Vec2D,
     passage: Passage,
@@ -164,7 +164,7 @@ pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
             }
         }
     }
-    Box::new(State {
+    Box::new(Day20 {
         start_pos: start_pos.unwrap(),
         end_pos: end_pos.unwrap(),
         passage,

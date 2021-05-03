@@ -136,7 +136,7 @@ fn nth_destroyed(nth: usize, map: &Vec<Vec<MapContent>>, laser_pos: Vec2D) -> Ve
     }
 }
 
-impl Solution for State {
+impl Solution for Day10 {
     fn part1(&self) -> String {
         select_best_astroid(&self.map).count.to_string()
     }
@@ -149,12 +149,12 @@ impl Solution for State {
 }
 
 // State required to solve day 10
-pub struct State {
+pub struct Day10 {
     map: Vec<Vec<MapContent>>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day10 {
         map: lines
             .iter()
             .map(|&row| {

@@ -159,7 +159,7 @@ fn compile(path: String) -> (String, String, String, String) {
     panic!("No solution found");
 }
 
-impl Solution for State {
+impl Solution for Day17 {
     fn part1(&self) -> String {
         let map = map_get(&self.program);
         if self.verbose {
@@ -199,13 +199,13 @@ impl Solution for State {
 }
 
 // State required to solve day 17
-pub struct State {
+pub struct Day17 {
     program: Vec<Intcode>,
     verbose: bool,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day17 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

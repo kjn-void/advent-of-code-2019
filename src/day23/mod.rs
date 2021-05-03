@@ -3,7 +3,7 @@ use super::Solution;
 use std::env;
 use std::sync::mpsc::channel;
 
-impl Solution for State {
+impl Solution for Day23 {
     fn part1(&self) -> String {
         let mut nics = Vec::new();
         for addr in 0..50 {
@@ -75,13 +75,13 @@ impl Solution for State {
 }
 
 // State required to solve day _
-pub struct State {
+pub struct Day23 {
     program: Vec<Intcode>,
     verbose: bool,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day23 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

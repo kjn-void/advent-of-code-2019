@@ -11,7 +11,7 @@ fn is_in_beam(pos: Vec2D, program: &Vec<Intcode>) -> bool {
     output.recv().unwrap() != 0
 }
 
-impl Solution for State {
+impl Solution for Day19 {
     fn part1(&self) -> String {
         (0..50)
             .flat_map(|y| {
@@ -43,12 +43,12 @@ impl Solution for State {
 }
 
 // State required to solve day 19
-pub struct State {
+pub struct Day19 {
     program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day19 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

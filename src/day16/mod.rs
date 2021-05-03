@@ -72,7 +72,7 @@ fn fft(signal: &Vec<i32>, phase: &dyn Fn(&Vec<i32>) -> Vec<i32>) -> String {
         .join("")
 }
 
-impl Solution for State {
+impl Solution for Day16 {
     fn part1(&self) -> String {
         fft(&self.signal, &normal_phase)
     }
@@ -96,12 +96,12 @@ impl Solution for State {
 }
 
 // State required to solve day 16
-pub struct State {
+pub struct Day16 {
     signal: Vec<i32>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day16 {
         signal: lines[0]
             .chars()
             .map(|n| n.to_digit(10).unwrap() as i32)

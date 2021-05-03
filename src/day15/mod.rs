@@ -110,7 +110,7 @@ fn fill_map_with_oxygen(map: &mut Map) -> (u32, u32) {
     (steps_to_start, steps_to_fill)
 }
 
-impl Solution for State {
+impl Solution for Day15 {
     fn part1(&self) -> String {
         let mut map = explore_map(&self.program);
         let (steps_to_oxygen, _) = fill_map_with_oxygen(&mut map);
@@ -125,12 +125,12 @@ impl Solution for State {
 }
 
 // State required to solve day 15
-pub struct State {
+pub struct Day15 {
     program: Vec<Intcode>,
 }
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
-    Box::new(State {
+    Box::new(Day15 {
         program: lines[0]
             .split(",")
             .map(|ic| ic.parse::<Intcode>().unwrap())

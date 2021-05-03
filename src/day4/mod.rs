@@ -5,7 +5,7 @@ const PIN_DIGITS: usize = 6;
 type Pin = u32;
 
 // State required to solve day 4
-pub struct State {
+pub struct Day4 {
     candidate_pins: RangeInclusive<Pin>,
 }
 
@@ -51,7 +51,7 @@ fn has_strict_pair(pin: &Pin) -> bool {
         .any(|&count| count == 2)
 }
 
-impl Solution for State {
+impl Solution for Day4 {
     fn part1(&self) -> String {
         self.candidate_pins
             .clone()
@@ -73,7 +73,7 @@ impl Solution for State {
 
 pub fn solution(lines: Vec<&str>) -> Box<dyn Solution> {
     let mut it = lines[0].split("-").map(|s| s.parse::<Pin>().unwrap());
-    Box::new(State {
+    Box::new(Day4 {
         candidate_pins: it.next().unwrap()..=it.next().unwrap(),
     })
 }
